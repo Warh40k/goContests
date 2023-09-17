@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -11,26 +12,31 @@ func main() {
 	var n, m, q, seas, ep int
 	fmt.Fscan(in, &n, &m, &q)
 
-	avail := make([][]int, m)
+	avail := make([][]int, n)
 	for i := range avail {
-		avail[i] = make([]int, n)
+		avail[i] = make([]int, m)
 	}
 
 	for i := 0; i < q; i++ {
 		fmt.Fscan(in, &ep, &seas)
-		avail[ep-1][seas-1] = 1
+		avail[seas-1][ep-1] = 1
 	}
+	missed := getMissedEpisodes(avail)
 
-	getMissedEpisodes(avail, out)
+	fmt.Fprintln(out, len(missed))
+	fmt.Fprintln(out, strings.Join(missed, "\n"))
 	out.Flush()
 }
 
-func getMissedEpisodes(avail [][]int, out *bufio.Writer) {
+func getMissedEpisodes(avail [][]int) []string {
+	var result []string
 	for i, seas := range avail {
 		for j, ep := range seas {
 			if ep == 0 {
-				fmt.Fprintln(out, i+1, j+1)
+				str := fmt.Sprintf("%d %d", j+1, i+1)
+				result = append(result, str)
 			}
 		}
 	}
+	return result
 }
