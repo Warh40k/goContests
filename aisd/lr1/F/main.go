@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 )
@@ -16,31 +17,35 @@ func main() {
 	for i := 0; i < N; i++ {
 		fmt.Fscan(in, &X[i])
 	}
-	//fmt.Fprintln(out, sleepDay(N, X))
 	test(out)
+	fmt.Fprintln(out, sleepDayTest(N, X))
 	out.Flush()
 }
 
 func test(out *bufio.Writer) {
 	for {
 		//N := rand.Intn(8*int(math.Pow(10, 6))) + 1
-		N := rand.Intn(20) + 1
+		N := 8 * int(math.Pow(10, 6))
 		X := make([]int, N)
 		for i := range X {
-			X[i] = rand.Intn(20) - 10 + 1
+			X[i] = rand.Intn(2000) - 1000 + 1
 		}
-		a := sleepDay(N, X)
+		//a := sleepDay(N, X)
 		b := sleepDayTest(N, X)
-		if a != b {
-			fmt.Fprintln(out, X, a, b)
-		}
+		//if a != b {
+		//	fmt.Fprintln(out, X, a, b)
+		//}
+		fmt.Fprintln(out, b)
+		out.Flush()
 	}
 
 }
 
 func sleepDay(N int, X []int) int {
 	var sbackward, sforward = X[0], 0
-
+	if N == 1 {
+		return 0
+	}
 	for i := 1; i < N; i++ {
 		for j := i + 1; j < N; j++ {
 			sforward += X[j]
@@ -63,10 +68,7 @@ func sleepDayTest(N int, X []int) int {
 
 	for i := 1; i < N; i++ {
 		sforward[i] = sforward[i-1] + X[i]
-	}
-
-	for i := N - 2; i > 0; i-- {
-		sbackward[i] = sbackward[i+1] + X[i]
+		sbackward[N-i-1] = sbackward[N-i] + X[N-i-1]
 	}
 
 	for i := 0; i < N; i++ {
