@@ -36,39 +36,35 @@ func countBorders(N int, X []int) (int, [][]int) {
 			table[i][j] = X[i] & X[j]
 		}
 	}
-	//for i := 0; i < N; i++ {
-	//	table[i] = make([]int, N)
-	//	for j := i + 1; j < N; j++ {
-	//		if table[j][j] != 0 && !hasBorders(i, j, N, table) {
-	//			count++
-	//		}
-	//	}
-	//}
-	var i, m, j = 0, 1, 1
-	for i != 0 || j < N {
-		if table[i][j] != 0 && !hasBorders(i, j, N, table) {
-			count++
-		}
-		if j == N-1 {
-			m++
-			j = m
-			i = 0
-		} else {
-			i++
-			j++
+
+	for i := 0; i < N; i++ {
+		for j := 0; j < N; j++ {
+			if i == j {
+				continue
+			}
+			if !hasBorders(i, j, N, table) {
+				count++
+				break
+			}
 		}
 	}
 	return count, table
 }
 
-func hasBorders(f, s, N int, table [][]int) bool {
-	for i := f; i < N-1; i++ {
-		for j := i + 1; j <= s; j++ {
-			if i == f && j == s {
-				continue
+func hasBorders(start, end, N int, table [][]int) bool {
+	for i := start; i != end; i++ {
+		if i == N {
+			i = 0
+		}
+		for j := i + 1; j < N+1; j++ {
+			if j == N {
+				j = 0
 			}
 			if table[i][j] != 0 {
 				return true
+			}
+			if j == end {
+				break
 			}
 		}
 	}
