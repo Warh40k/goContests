@@ -2,101 +2,79 @@ package main
 
 import (
 	"fmt"
+	"math"
 )
 
 func main() {
 	var start, end uint64
 	fmt.Scan(&start, &end)
 
-	fmt.Println(getTradeDaysCount(start, end))
+	fmt.Println(getTradeDaysCount(start, end), countTradeDays(start, end))
 }
 
 func getTradeDaysCount(start, end uint64) int {
 	count := 0
-	digit := 1
 	// двоичное представление чисел
 	bstart, bend := convertToBinary(start), convertToBinary(end)
-	fmt.Println(bstart, bend)
 	// количество разрядов каждого числа
 	lstart, lend := len(bstart), len(bend)
-	// количество старших разрядов
-	constOrder := 0
-	// минимальное количество групп чисел
-	gCount := 1
 
-	// Поиск старших разрядов
-	if lstart == lend {
-		var prev = -1
-		for i := 0; bstart[i] == bend[i]; i++ {
-			constOrder++
-			if prev != bstart[i] {
-				gCount++
-			}
+	if lstart != lend {
+		bstart = resizeNum(lstart, lend, bstart)
+	}
+
+	var prev, gcount int = -1, 0
+	//Подсчет изначального количества групп
+	for i := range bstart {
+		if bstart[i] != prev {
 			prev = bstart[i]
-		}
-		if gCount > 3 {
-			return 0
+			gcount++
 		}
 	}
+	if gcount == 3 {
+		count++
+	}
 
-	digit = bend[gCount-1]
+	iStart, jStart := start, start
 
-	for i := 0; i < 2; i++ {
-		// Перебор
-		for j := constOrder; j < lend; j++ {
-			if (digit > bend[j] || digit < bstart[j]) && gCount < 3 {
-				gCount++
-				digit = invertDigit(digit)
-				for k := j; k < lend; k++ {
-					if (digit > bend[k] || digit < bstart[k]) && gCount < 3 {
-						gCount++
-						digit = invertDigit(digit)
-						for m := k; m < lend; m++ {
-
-						}
-					} else if gCount == 3 {
-						break
-					} else if k == lend-1 {
-						count++
-					}
+	//for i := lend - 1; i > 0; i``-- {
+	//	if bstart[i] == 0 {
+	//		iStart += uint64(math.Pow(2, float64(i)))
+	//		if iStart > end {
+	//			break
+	//		}
+	//		count++
+	//	} else {
+	//		count++
+	//	}
+	//	jStart = start
+	//	for j := 0; j < i-1; j++ {
+	//		if bstart[j] == 0 {
+	//			jStart += uint64(math.Pow(2, float64(i)))
+	//			if jStart > end {
+	//				break
+	//			}
+	//			count++
+	//		} else {
+	//			count++
+	//		}
+	//	}
+	//
+	//}
+	for i := lstart - 1; i < lend; i++ {
+		for j := 0; j < i-1; j++ {
+			if bstart[j] == 0 {
+				jStart += uint64(math.Pow(2, float64(j)))
+				if jStart > end {
+					break
 				}
-			} else {
-				break
+				count++
 			}
 		}
-
-		if digit == 1 {
-			digit = 0
-		} else {
-			digit = 1
-		}
 	}
+	fmt.Println(bstart, bend)
+	return count
 }
-
-func checkRange(digit, k, lstart, lend, count, gCount int, start, end []int) int {
-	if k == lend && gCount == 3 {
-		count++
-		return count
-	} else if gCount > 3 {
-		return count
-	}
-	if digit > end[k] || (lstart+k > lend && digit < start[]) {
-
-	}
-}
-
-func invertDigit(digit int) int {
-	if digit == 1 {
-		return 0
-	} else {
-		return 1
-	}
-}
-
-//
-//func checkRange(digit, k int, start, end []int) bool {
-//
-//}
 
 func convertToBinary(num uint64) []int {
 
@@ -105,10 +83,54 @@ func convertToBinary(num uint64) []int {
 		result = append(result, int(num%2))
 		num /= 2
 	}
-
-	l := len(result)
-	for i, j := 0, l-1; i < j; i, j = i+1, j-1 {
-		result[i], result[j] = result[j], result[i]
-	}
+	//
+	//l := len(result)
+	//for i, j := 0, l-1; i < j; i, j = i+1, j-1 {
+	//	result[i], result[j] = result[j], result[i]
+	//}
 	return result
+}
+
+func resizeNum(len1, len2 int, num []int) []int {
+	result := make([]int, len2)
+	for i := 0; i < len1; i++ {
+		result[i] = num[i]
+	}
+
+	return result
+}
+
+func countTradeDays(start, end uint64) int {
+	count := 0
+	for i := start; i <= end; i++ {
+		if checkBinary(i) {
+			count++
+		}
+	}
+	return count
+}
+
+func checkBinary(num uint64) bool {
+	prev := num % 2
+	var cur uint64 = 0
+	factor := num / 2
+	gcount := 0
+
+	for factor != 0 {
+		cur = factor % 2
+		if cur != prev {
+			gcount++
+			prev = cur
+		}
+		if gcount > 2 {
+			return false
+		}
+		if factor != 0 {
+			factor = factor / 2
+		}
+	}
+	if gcount != 2 {
+		return false
+	}
+	return true
 }
