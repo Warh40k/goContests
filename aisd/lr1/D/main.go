@@ -12,6 +12,7 @@ func main() {
 	var n, m, q, seas, ep int
 	fmt.Fscan(in, &n, &m, &q)
 
+	// массив сериалов и массив серий
 	avail := make([][]int, n)
 	for i := range avail {
 		avail[i] = make([]int, m)
@@ -29,7 +30,7 @@ func main() {
 }
 
 func getMissedEpisodes(avail [][]int) []string {
-	var result []string
+	var result []string //TODO Переделать в список
 	for i, seas := range avail {
 		for j, ep := range seas {
 			if ep == 0 {

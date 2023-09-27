@@ -21,13 +21,13 @@ func main() {
 			votes[j] = make([]string, 2)
 			fmt.Fscan(in, &votes[j][0], &votes[j][1])
 		}
-		findCompomiss(out, n, votes)
+		findCompomiss(out, votes)
 	}
 
 	out.Flush()
 }
 
-func findCompomiss(out *bufio.Writer, n int, votes [][]string) {
+func findCompomiss(out *bufio.Writer, votes [][]string) {
 	var vmin, vmax, val = 15, 30, 0
 	for _, vote := range votes {
 		val, _ = strconv.Atoi(vote[1])

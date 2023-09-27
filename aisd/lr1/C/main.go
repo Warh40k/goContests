@@ -15,6 +15,7 @@ func main() {
 }
 
 func maxFriends(a, b int) int {
+	//алгоритм евклида
 	for b != 0 {
 		a, b = b, a%b
 	}

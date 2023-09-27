@@ -16,9 +16,9 @@ func main() {
 	for i := 0; i < N; i++ {
 		fmt.Fscan(in, &X[i])
 	}
-	count, borders := countBorders(N, X)
-	fmt.Fprintf(out, "%d\n%v", count, borders)
-	//fmt.Fprintln(out, count)
+
+	count, _ := countBorders(N, X)
+	fmt.Fprintln(out, count)
 	out.Flush()
 }
 
@@ -31,61 +31,28 @@ func countBorders(N int, X []int) (int, []int) {
 			if next > N-1 {
 				next -= N
 			}
-			if isConnected(j, i, N, borders) != isConnectedBack(j, next, N, borders) {
-				fmt.Println(j, i, N, borders, isConnected(j, i, N, borders))
-				fmt.Println(j, next, N, borders, isConnectedBack(j, next, N, borders))
-				fmt.Println()
-			}
-			if isConnected(j, i, N, borders) && X[j]&X[next] != 0 {
+			k := hasBordersBetween(j, i, N, borders)
+			if (i == 1 || k == -1) && X[j]&X[next] != 0 {
 				borders = append(borders, next)
 				count++
+			} else if k != -1 && k > j {
+				j = k
 			}
 		}
-
+	}
+	if count == 0 {
+		count = 1
 	}
 	return count, borders
 }
-func isConnected(start, step, N int, borders []int) bool {
+func hasBordersBetween(start, step, N int, borders []int) int {
 	if borders != nil {
 		for _, val := range borders {
-			if (start+step <= N-1 && val > start && val <= start+step) || (start+step > N-1 && (val > start || val < start+step-N)) {
-				return false
+			if (start+step <= N-1 && val > start && val <= start+step) ||
+				(start+step > N-1 && (val > start || val < start+step-N)) {
+				return val
 			}
 		}
 	}
-	return true
+	return -1
 }
-
-func isConnectedBack(start, end, N int, borders []int) bool {
-	if borders == nil {
-		return true
-	}
-	for i := start + 1; i != end+1; i++ {
-		for _, border := range borders {
-			if border == i {
-				return false
-			}
-		}
-		if i == N {
-			i = -1
-		}
-	}
-	return true
-}
-
-//for _, border := range borders {
-//	if (start < border && end >= border) || (start < border && end >= border) {
-//		return false
-//	} 1 2 3 4e 5s 6 7
-//} (4 + 1 + 1) - 7
-// (6-3)
-//return true
-
-//func search(x int, X []int) bool {
-//	for _, val := range X {
-//		if val == x {
-//			return true
-//		}
-//	}
-//	return false
-//}

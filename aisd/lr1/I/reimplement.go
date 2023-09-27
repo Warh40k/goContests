@@ -31,46 +31,26 @@ func getTradeDaysCount(start, end uint64) int {
 			gcount++
 		}
 	}
-	if gcount == 3 {
-		count++
-	}
 
-	iStart, jStart := start, start
+	jStart, jEnd := start
+	var tempCount int
 
-	//for i := lend - 1; i > 0; i``-- {
-	//	if bstart[i] == 0 {
-	//		iStart += uint64(math.Pow(2, float64(i)))
-	//		if iStart > end {
-	//			break
-	//		}
-	//		count++
-	//	} else {
-	//		count++
-	//	}
-	//	jStart = start
-	//	for j := 0; j < i-1; j++ {
-	//		if bstart[j] == 0 {
-	//			jStart += uint64(math.Pow(2, float64(i)))
-	//			if jStart > end {
-	//				break
-	//			}
-	//			count++
-	//		} else {
-	//			count++
-	//		}
-	//	}
-	//
-	//}
 	for i := lstart - 1; i < lend; i++ {
-		for j := 0; j < i-1; j++ {
-			if bstart[j] == 0 {
-				jStart += uint64(math.Pow(2, float64(j)))
-				if jStart > end {
-					break
-				}
-				count++
+		jEnd = uint64(math.Pow(2, float64(i)))
+		tempCount = 0
+		for j := 0; j < i; j++ {
+			jStart = uint64(math.Pow(2, float64(j))) + 1
+			jEnd += jStart
+			if jEnd < start {
+				continue
 			}
+			if jEnd > end {
+				break
+			}
+
+			tempCount += int(math.Pow(2, float64(j))) - 1
 		}
+		count += tempCount
 	}
 	fmt.Println(bstart, bend)
 	return count

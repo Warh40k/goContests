@@ -42,7 +42,7 @@ func countBorders(N int, X []int) (int, [][]int) {
 			if i == j {
 				continue
 			}
-			if !hasBorders(i, j, N, table) {
+			if table[i][j] != 0 && !hasBorders(i, j, N, table) {
 				count++
 				break
 			}
@@ -53,19 +53,20 @@ func countBorders(N int, X []int) (int, [][]int) {
 
 func hasBorders(start, end, N int, table [][]int) bool {
 	for i := start; i != end; i++ {
-		if i == N {
-			i = 0
-		}
 		for j := i + 1; j < N+1; j++ {
 			if j == N {
 				j = 0
 			}
-			if table[i][j] != 0 {
+			if end-start != 1 && table[i][j] != 0 {
 				return true
 			}
 			if j == end {
 				break
 			}
+
+		}
+		if i+1 == N {
+			i = -1
 		}
 	}
 	return false

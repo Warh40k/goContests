@@ -24,8 +24,10 @@ func main() {
 
 func shift(arr []string, k int, n int) []string {
 	result := make([]string, n)
+	// Индекс первого элемента массива
 	index := int(math.Abs(float64(k % n)))
 
+	//Если сдвиг вправо
 	if k > 0 {
 		index = n - index
 	}
