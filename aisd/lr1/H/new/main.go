@@ -10,18 +10,15 @@ func main() {
 	in, out := bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
 	var N int
 	fmt.Fscan(in, &N)
-
 	var X = make([]int, N)
-
 	for i := 0; i < N; i++ {
 		fmt.Fscan(in, &X[i])
 	}
-
 	count, table := countBorders(N, X)
 	fmt.Fprintln(out, count)
-	fmt.Fprintln(out, "", X)
+	fmt.Fprintln(out, "   ", X)
 	for i, val := range table {
-		fmt.Fprint(out, X[i], "")
+		fmt.Fprint(out, X[i], "  ")
 		fmt.Fprintln(out, val)
 	}
 	out.Flush()
@@ -36,7 +33,6 @@ func countBorders(N int, X []int) (int, [][]int) {
 			table[i][j] = X[i] & X[j]
 		}
 	}
-
 	for i := 0; i < N; i++ {
 		for j := 0; j < N; j++ {
 			if i == j {
@@ -50,7 +46,6 @@ func countBorders(N int, X []int) (int, [][]int) {
 	}
 	return count, table
 }
-
 func hasBorders(start, end, N int, table [][]int) bool {
 	for i := start; i != end; i++ {
 		for j := i + 1; j < N+1; j++ {
@@ -63,7 +58,6 @@ func hasBorders(start, end, N int, table [][]int) bool {
 			if j == end {
 				break
 			}
-
 		}
 		if i+1 == N {
 			i = -1
