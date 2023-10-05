@@ -25,32 +25,20 @@ func main() {
 
 func countBorders(N int, X []int) int {
 	count := 0
-	marked := make([][]int, N)
-	//table := make([][]int, N)
-	for i := 0; i < N; i++ {
-		marked[i] = make([]int, N)
-		//table[i] = make([]int, N)
-		for j, k := i+1, 0; k < N; j++ {
+	m := 0
+	marked := make[[][]int, N]
+	for k := 1; k < N; k++ {
+		for i, j := m, k; i < N; i, j = i+1, j+1 {
+			if j == 1e5 {
+				fmt.Print("Capez")
+			}
 			if j == N {
 				j = 0
 			}
-			//table[i][k] = X[i] & X[j]
-			k++
-		}
-	}
-
-	for k := 0; k < N; k++ {
-
-		for i := 0; i < N; i++ {
-			prev1 := &marked[i][int(math.Abs(float64((j-1)%N)))]
-			prev2 := &marked[int(math.Abs(float64((i+1)%N)))][int(math.Abs(float64((j-1)%N)))]
-			if *prev1 == 0 && *prev2 == 0 {
-				if table[i][j] != 0 {
-					count++
-					marked[i][j], *prev1, *prev2 = 1, 1, 1
-				}
-			} else {
-				marked[i][j] = 1
+			if X[i]&X[j] != 0 {
+				count++
+				k++
+				break
 			}
 		}
 	}
