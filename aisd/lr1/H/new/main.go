@@ -10,8 +10,8 @@ import (
 
 func main() {
 	in, out := bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
-	test(out)
-	os.Exit(0)
+	//test(out)
+	//os.Exit(0)
 	var N int
 	fmt.Fscan(in, &N)
 	var X = make([]int, N)
@@ -25,19 +25,22 @@ func main() {
 
 func countBorders(N int, X []int) int {
 	count := 0
-	m := 0
-	marked := make[[][]int, N]
-	for k := 1; k < N; k++ {
-		for i, j := m, k; i < N; i, j = i+1, j+1 {
-			if j == 1e5 {
-				fmt.Print("Capez")
-			}
+	//marked := make([][]int, N)
+	//for i := 0; i < N; i++ {
+	//	marked[i] = make([]int, N)
+	//}
+	for i := 0; i < N; i++ {
+		for j := i + 1; j != i; j++ {
 			if j == N {
 				j = 0
 			}
+			//if j == 1e5 {
+			//	fmt.Print("Capez")
+			//}
 			if X[i]&X[j] != 0 {
-				count++
-				k++
+				if j == i+1 || (X[(i-1+N)%N]&X[(j-1+N)%N] == 0 && X[(i+1+N)%N]&X[(j+N)%N] == 0) {
+					count++
+				}
 				break
 			}
 		}
