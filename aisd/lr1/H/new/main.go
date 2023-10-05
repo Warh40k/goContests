@@ -29,20 +29,37 @@ func countBorders(N int, X []int) int {
 	//for i := 0; i < N; i++ {
 	//	marked[i] = make([]int, N)
 	//}
+	table := make([][]int, N)
 	for i := 0; i < N; i++ {
-		for j := i + 1; j != i; j++ {
+		table[i] = make([]int, N)
+		for j := 0; j < N; j++ {
+			table[i][j] = X[i] & X[j]
+		}
+	}
+	for k := 1; k < N; k++ {
+		counter, success := 0, false
+		for i, j := 0, k; i < N; i, j = i+1, j+1 {
 			if j == N {
 				j = 0
 			}
-			//if j == 1e5 {
-			//	fmt.Print("Capez")
-			//}
-			if X[i]&X[j] != 0 {
-				if j == i+1 || (X[(i-1+N)%N]&X[(j-1+N)%N] == 0 && X[(i+1+N)%N]&X[(j+N)%N] == 0) {
-					count++
-				}
-				break
+			if j == 1e5 {
+				fmt.Print("Capez")
 			}
+			if X[i]&X[j] != 0 {
+				counter++
+				if k == 1 || (X[(i+N)%N]&X[(j-1+N)%N] == 0 && X[(i+1+N)%N]&X[(j+N)%N] == 0) && success == false {
+					count++
+					success = true
+				} else {
+					success = false
+				}
+			} else if k != 1 && (X[(i+N)%N]&X[(j-1+N)%N] != 0 || X[(i+1+N)%N]&X[(j+N)%N] != 0) {
+				counter++
+				success = false
+			}
+		}
+		if counter >= N {
+			break
 		}
 	}
 
