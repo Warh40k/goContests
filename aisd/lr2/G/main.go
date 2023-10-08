@@ -96,39 +96,50 @@ func main() {
 	for i := 0; i < N; i++ {
 		fmt.Fscan(in, &arr[i])
 	}
-
-	fmt.Fprintln(out, getSquare(N, arr))
+	square, _ := getSquare(N, arr)
+	fmt.Fprintln(out, square)
 	out.Flush()
 }
 
-func getSquare(N int, arr []int) int {
+func getSquare(N int, arr []int) (int, error) {
 	sides := make([]Deque, 4)
-	var i, result int
-
-	//for i := 0; i < N; i++ {
-	//	sides[0].pushTail(arr[i])
-	//}
-	//sum = sides[0].sum
-	//cursum = sum
-
+	var i int
+	var maxmin [2]int
+	for i := 0; i < N; i++ {
+		sides[0].pushTail(arr[i])
+	}
+	maxmin[0] = sides[0].sum
+	square := 0
 	for {
-		val := sides[i].popTail()
-		sides[(i+1)%4].pushHead(val)
-		if sides[i].sum > cursum/2 {
-			if i == 3 {
+		// сравнение макс значения, на которое могут быть помножены доски
+		if sides[i].sum <= maxmin[0] {
+			maxmin[1] = maxmin[0]
+			maxmin[0] = sides[i].sum
+		} else if sides[i].sum < maxmin[1] {
+			maxmin[1] = sides[i].sum
+		}
+		//Вынуть из конца и вставить в начало следующего
+		if i != 3 && (i == 0 || sides[i].size > sides[i+1].size) {
+			val := sides[i].popTail()
+			sides[i+1].pushHead(val)
+		}
+		// Проверка конца, обновление макс площади
+		if i == 3 {
+			if maxmin[0]*maxmin[1] > square {
+				square = maxmin[0] * maxmin[1]
+			}
+			maxmin[0], maxmin[1] = 10e9, 10e9
+			// Если все возможные элементы просеялись вниз => все варианты просмотрены
+			if sides[i].size >= N-3 {
 				break
 			}
-		} else {
-			if i == 3 {
-				cursum = sum
-			} else {
-				cursum -= sides[i].sum
-			}
-			i = (i + 1) % 4
+			i = 0
+			continue
 		}
+		i++
 	}
 
-	return result
+	return square, nil
 	//for i := 0; i < 4; i++ {
 	//	result += sides[i].sum
 	//}
