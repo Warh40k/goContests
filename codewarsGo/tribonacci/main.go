@@ -13,7 +13,7 @@ func main() {
 	scanner.Scan()
 	n, err := strconv.Atoi(scanner.Text())
 	if err != nil {
-		panic("Error input")
+		panic("Error input.txt")
 	}
 
 	for _, value := range Tribonacci(signature, n) {

@@ -4,12 +4,16 @@ import "testing"
 
 func TestTask(t *testing.T) {
 	arr := [][]int{
-		{3, 2, 1, 4, 9, 1, 4, 6},
+		{3, 2, 9, 1, 1, 4, 4, 6},
 		{1, 2, 3, 4, 5},
+		{5, 4, 3, 2, 1},
+		{13, 8, 12, 9},
 	}
 	expected := []int{
 		50,
 		9,
+		9,
+		96,
 	}
 
 	for i := 0; i < len(arr); i++ {

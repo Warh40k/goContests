@@ -32,13 +32,13 @@ func countBorders(N int, X []int) int {
 	marked[0] = make([]int, N)
 	marked[1] = make([]int, N)
 
-	table := make([][]int, N)
-	for i := 0; i < N; i++ {
-		table[i] = make([]int, N)
-		for j := 0; j < N; j++ {
-			table[i][j] = X[i] & X[j]
-		}
-	}
+	//table := make([][]int, N)
+	//for i := 0; i < N; i++ {
+	//	table[i] = make([]int, N)
+	//	for j := 0; j < N; j++ {
+	//		table[i][j] = X[i] & X[j]
+	//	}
+	//}
 	for k := 1; k < N; k++ {
 		counter := 0
 
@@ -51,14 +51,17 @@ func countBorders(N int, X []int) int {
 				counter++
 				if k == 1 {
 					count++
-				} else if marked[0][i] == 0 && X[(i+N+1)%N]&X[j] == 0 {
+				} else if marked[0][i] == 0 && (marked[1][(i+N+1)%N] > (k+int(math.Abs(float64(j-k)))+1)%N || marked[0][(i+N+1)%N] == 0) {
 					count++
 					marked[0][(i+N+1)%N] = 1
 				}
 
 				marked[0][i] = 1
-			} else if k != 1 && (marked[0][i] != 0 || marked[0][(i+N+1)%N] != 0) {
+				marked[1][i] = j
+			} else if k != 1 && (marked[0][i] == 1 || marked[0][(i+N+1)%N] == 1) {
 				marked[0][i] = 1
+				marked[1][i] = j
+
 				counter++
 			}
 		}
@@ -88,7 +91,7 @@ func testHard(writer *bufio.Writer) {
 
 func testCorrect() {
 	for {
-		N := rand.Intn(5) + 1
+		N := rand.Intn(3) + 1
 		arr := make([]int, N)
 
 		for i := 0; i < N; i++ {

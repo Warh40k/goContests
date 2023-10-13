@@ -3,11 +3,15 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math"
+	"math/rand"
 	"os"
 )
 
 func main() {
 	in, out := bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
+	//test(out)
+	//os.Exit(1)
 	var N int
 	fmt.Fscan(in, &N)
 
@@ -22,6 +26,18 @@ func main() {
 	out.Flush()
 }
 
+func test(writer *bufio.Writer) {
+	N := int(4 * math.Pow(10, 5))
+	arr := make([]int, N)
+
+	for i := 0; i < N; i++ {
+		arr[i] = rand.Intn(int(math.Pow(10, 9)) + 1)
+	}
+	count, borders := countBorders(N, arr)
+	fmt.Println(writer, count, borders)
+	writer.Flush()
+}
+
 func countBorders(N int, X []int) (int, []int) {
 	count := 0
 	var borders []int
@@ -31,12 +47,9 @@ func countBorders(N int, X []int) (int, []int) {
 			if next > N-1 {
 				next -= N
 			}
-			k := hasBordersBetween(j, i, N, borders)
-			if (i == 1 || k == -1) && X[j]&X[next] != 0 {
+			if X[j]&X[next] != 0 && (i == 1 || hasBordersBetween(j, i, N, borders)) {
 				borders = append(borders, next)
 				count++
-			} else if k != -1 && k > j {
-				j = k
 			}
 		}
 	}
@@ -45,14 +58,14 @@ func countBorders(N int, X []int) (int, []int) {
 	}
 	return count, borders
 }
-func hasBordersBetween(start, step, N int, borders []int) int {
+func hasBordersBetween(start, step, N int, borders []int) bool {
 	if borders != nil {
 		for _, val := range borders {
 			if (start+step <= N-1 && val > start && val <= start+step) ||
-				(start+step > N-1 && (val > start || val < start+step-N)) {
-				return val
+				(start+step > N-1 && (val > start || val <= start+step-N)) {
+				return false
 			}
 		}
 	}
-	return -1
+	return true
 }
