@@ -9,42 +9,6 @@ import (
 	"strings"
 )
 
-type Stack[T any] struct {
-	size int
-	top  *SNode[T]
-}
-
-type SNode[T any] struct {
-	next  *SNode[T]
-	value T
-}
-
-func (s *Stack[T]) push(el T) {
-	temp := new(SNode[T])
-
-	temp.value = el
-	temp.next = s.top
-	s.top = temp
-
-	s.size++
-}
-
-func (s *Stack[T]) pop() T {
-	val := s.top.value
-	s.top = s.top.next
-
-	s.size--
-
-	return val
-}
-
-func (s *Stack[T]) isEmpty() bool {
-	if s.size == 0 {
-		return true
-	}
-	return false
-}
-
 type Queue[T any] struct {
 	size int
 	head *QNode[T]
@@ -56,7 +20,7 @@ type QNode[T any] struct {
 	next  *QNode[T]
 }
 
-func (q *Queue[T]) enqueue(el T) {
+func (q *Queue[T]) push(el T) {
 	top := new(QNode[T])
 	if top == nil {
 		panic("StackOverflow")
@@ -76,7 +40,7 @@ func (q *Queue[T]) enqueue(el T) {
 	q.size++
 }
 
-func (q *Queue[T]) dequeue() T {
+func (q *Queue[T]) pop() T {
 	if q.size == 0 {
 		panic("Underflow")
 	}
@@ -88,9 +52,8 @@ func (q *Queue[T]) dequeue() T {
 }
 
 type PriorityMinHeap struct {
-	a        []int
-	heapSize int
-	k        int
+	k, heapSize int
+	a           [10e6]int
 }
 
 func (bh *PriorityMinHeap) siftUp(i int) {
@@ -115,7 +78,13 @@ func (bh *PriorityMinHeap) siftDown(i int) {
 	}
 }
 
-func (bh *PriorityMinHeap) getMin(k int) string {
+func (bh *PriorityMinHeap) insert(i int) {
+	bh.heapSize++
+	bh.a[bh.heapSize-1] = i
+	bh.siftUp(bh.heapSize - 1)
+}
+
+func (bh *PriorityMinHeap) getMin() string {
 	if bh.heapSize == 0 {
 		return "*"
 	}
@@ -127,22 +96,34 @@ func (bh *PriorityMinHeap) getMin(k int) string {
 	return strconv.Itoa(hmax)
 }
 
-func insertToKQueue(k, x int) {
-
+func findPriority(k int, priors *Queue[*PriorityMinHeap]) *PriorityMinHeap {
+	var heap = priors.head
+	for i := 0; i < k; i++ {
+		heap = heap.next
+	}
+	return heap.value
 }
 
-func executeCommands(commands Queue[string]) Queue[int] {
-	priorities := new(Stack[*PriorityMinHeap])
+func executeCommands(commands *Queue[string]) *Queue[string] {
+	priors := new(Queue[*PriorityMinHeap])
+	result := new(Queue[string])
 
 	for commands.size != 0 {
-		command := strings.Split(commands.dequeue(), " ")
+		command := strings.Split(strings.Trim(commands.pop(), "\n"), " ")
+
 		switch command[0] {
 		case "create":
-			priorities.push(new(PriorityMinHeap))
+			priors.push(new(PriorityMinHeap))
 		case "insert":
-
+			k, _ := strconv.Atoi(command[1])
+			x, _ := strconv.Atoi(command[2])
+			findPriority(k, priors).insert(x)
+		case "extract-min":
+			k, _ := strconv.Atoi(command[1])
+			result.push(findPriority(k, priors).getMin())
 		}
 	}
+	return result
 }
 
 func main() {
@@ -154,9 +135,13 @@ func main() {
 		if err == io.EOF {
 			break
 		}
-		commands.enqueue(cmd)
+		commands.push(cmd)
 	}
 
-	fmt.Fprintln(out, executeCommands(commands))
+	result := executeCommands(commands).head
+	for result != nil {
+		fmt.Fprintln(out, result.value)
+		result = result.next
+	}
 	out.Flush()
 }
