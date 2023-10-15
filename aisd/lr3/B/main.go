@@ -96,7 +96,20 @@ func (bh *PriorityMinHeap) getMin() string {
 	return strconv.Itoa(hmax)
 }
 
-func findPriority(k int, priors *Queue[*PriorityMinHeap]) *PriorityMinHeap {
+func (bh *PriorityMinHeap) decreaseKey(x, y int) {
+	i := 0
+	for bh.a[i] != x {
+		i++
+	}
+	bh.a[i] = y
+	bh.siftUp(i)
+}
+
+func (priors *Queue[T]) mergeHeaps(k, m int) {
+
+}
+
+func (priors *Queue[T]) findPriority(k int) T {
 	var heap = priors.head
 	for i := 0; i < k; i++ {
 		heap = heap.next
@@ -117,10 +130,27 @@ func executeCommands(commands *Queue[string]) *Queue[string] {
 		case "insert":
 			k, _ := strconv.Atoi(command[1])
 			x, _ := strconv.Atoi(command[2])
-			findPriority(k, priors).insert(x)
+			priors.findPriority(k).insert(x)
 		case "extract-min":
 			k, _ := strconv.Atoi(command[1])
-			result.push(findPriority(k, priors).getMin())
+			result.push(priors.findPriority(k).getMin())
+		case "decrease-key":
+			k, _ := strconv.Atoi(command[1])
+			x, _ := strconv.Atoi(command[2])
+			y, _ := strconv.Atoi(command[3])
+			priors.findPriority(k).decreaseKey(x, y)
+		case "merge":
+			k, _ := strconv.Atoi(command[1])
+			m, _ := strconv.Atoi(command[2])
+			kq, mq := priors.findPriority(k), priors.findPriority(m)
+			merged := new(PriorityMinHeap)
+			for i := 0; i < kq.heapSize; i++ {
+				merged.insert(kq.a[i])
+			}
+			for i := 0; i < mq.heapSize; i++ {
+				merged.insert(mq.a[i])
+			}
+			priors.push(merged)
 		}
 	}
 	return result
