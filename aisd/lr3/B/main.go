@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"strconv"
-	"strings"
 )
 
 type Queue[T any] struct {
@@ -105,10 +104,6 @@ func (bh *PriorityMinHeap) decreaseKey(x, y int) {
 	bh.siftUp(i)
 }
 
-func (priors *Queue[T]) mergeHeaps(k, m int) {
-
-}
-
 func (priors *Queue[T]) findPriority(k int) T {
 	var heap = priors.head
 	for i := 0; i < k; i++ {
@@ -122,26 +117,25 @@ func executeCommands(commands *Queue[string]) *Queue[string] {
 	result := new(Queue[string])
 
 	for commands.size != 0 {
-		command := strings.Split(strings.Trim(commands.pop(), "\n"), " ")
 
-		switch command[0] {
+		switch commands.pop() {
 		case "create":
 			priors.push(new(PriorityMinHeap))
 		case "insert":
-			k, _ := strconv.Atoi(command[1])
-			x, _ := strconv.Atoi(command[2])
+			k, _ := strconv.Atoi(commands.pop())
+			x, _ := strconv.Atoi(commands.pop())
 			priors.findPriority(k).insert(x)
 		case "extract-min":
-			k, _ := strconv.Atoi(command[1])
+			k, _ := strconv.Atoi(commands.pop())
 			result.push(priors.findPriority(k).getMin())
 		case "decrease-key":
-			k, _ := strconv.Atoi(command[1])
-			x, _ := strconv.Atoi(command[2])
-			y, _ := strconv.Atoi(command[3])
+			k, _ := strconv.Atoi(commands.pop())
+			x, _ := strconv.Atoi(commands.pop())
+			y, _ := strconv.Atoi(commands.pop())
 			priors.findPriority(k).decreaseKey(x, y)
 		case "merge":
-			k, _ := strconv.Atoi(command[1])
-			m, _ := strconv.Atoi(command[2])
+			k, _ := strconv.Atoi(commands.pop())
+			m, _ := strconv.Atoi(commands.pop())
 			kq, mq := priors.findPriority(k), priors.findPriority(m)
 			merged := new(PriorityMinHeap)
 			for i := 0; i < kq.heapSize; i++ {
@@ -157,11 +151,12 @@ func executeCommands(commands *Queue[string]) *Queue[string] {
 }
 
 func main() {
-	in, out := bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
+	out := bufio.NewWriter(os.Stdout)
 	commands := new(Queue[string])
 
 	for {
-		cmd, err := in.ReadString('\n')
+		var cmd string
+		_, err := fmt.Scan(&cmd)
 		if err == io.EOF {
 			break
 		}
@@ -170,7 +165,11 @@ func main() {
 
 	result := executeCommands(commands).head
 	for result != nil {
-		fmt.Fprintln(out, result.value)
+		if result.next != nil {
+			fmt.Fprintln(out, result.value)
+		} else {
+			fmt.Fprint(out, result.value)
+		}
 		result = result.next
 	}
 	out.Flush()
