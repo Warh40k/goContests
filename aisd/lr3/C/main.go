@@ -3,24 +3,25 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 )
 
 type Worker struct {
-	salary int
-}
-
-type Value[T any] struct {
-	sortValue int
-	source    *T
+	salary, timeEnd int
 }
 
 type Order struct {
 	start, length int
 }
 
-type MinHeap[T any] struct {
-	a        []*Value[T]
+type SalaryMinHeap struct {
+	a        []*Worker
+	heapSize int
+}
+
+type TimeEndMinHeap struct {
+	a        []*Worker
 	heapSize int
 }
 
@@ -68,35 +69,26 @@ func (q *Queue) pop() *Order {
 
 func (q *Queue) peek() *Order {
 	if q.size == 0 {
-		panic("Underflow")
+		return nil
 	}
 	return q.head.value
 }
 
-func (bh *MinHeap[T]) sort() []*Value[T] {
-	k := bh.heapSize
-	var sorted []*Value[T]
-	for i := 0; i < k; i++ {
-		sorted[i] = bh.getMin()
-	}
-	return sorted
-}
-
-func (bh *MinHeap[T]) siftUp(i int) {
-	for bh.a[i].sortValue < bh.a[(i-1)/2].sortValue {
+func (bh *SalaryMinHeap) siftDown(i int) {
+	for bh.a[i].salary < bh.a[(i-1)/2].salary {
 		bh.a[i], bh.a[(i-1)/2] = bh.a[(i-1)/2], bh.a[i]
 		i = (i - 1) / 2
 	}
 }
 
-func (bh *MinHeap[T]) siftDown(i int) {
+func (bh *SalaryMinHeap) siftUp(i int) {
 	for 2*i+1 < bh.heapSize {
 		left, right := 2*i+1, 2*i+2
 		j := left
-		if right < bh.heapSize && bh.a[right].sortValue < bh.a[left].sortValue {
+		if right < bh.heapSize && bh.a[right].salary < bh.a[left].salary {
 			j = right
 		}
-		if bh.a[i].sortValue <= bh.a[j].sortValue {
+		if bh.a[i].salary <= bh.a[j].salary {
 			break
 		}
 		bh.a[i], bh.a[j] = bh.a[j], bh.a[i]
@@ -104,99 +96,162 @@ func (bh *MinHeap[T]) siftDown(i int) {
 	}
 }
 
-func (bh *MinHeap[T]) getMin() *Value[T] {
+func (bh *SalaryMinHeap) getMin() *Worker {
 	if bh.heapSize == 0 {
 		panic("Underflow insert")
 	}
 	hmin := bh.a[0]
 	bh.a[0] = bh.a[bh.heapSize-1]
 	bh.heapSize--
-	bh.siftDown(0)
+	bh.siftUp(0)
 
 	return hmin
 }
 
-func (bh *MinHeap[T]) insert(key *Value[T]) {
+func (bh *SalaryMinHeap) insert(key *Worker) {
 	bh.heapSize += 1
 	bh.a[bh.heapSize-1] = key
-	bh.siftUp(bh.heapSize - 1)
+	bh.siftDown(bh.heapSize - 1)
 }
 
-func (bh *MinHeap[T]) build(arr []*Value[T], N int) {
+func (bh *SalaryMinHeap) build(arr []*Worker, N int) {
 	bh.a = arr
 	bh.heapSize = N
 	for i := bh.heapSize / 2; i >= 0; i-- {
-		bh.siftDown(i)
+		bh.siftUp(i)
 	}
 }
 
-func (bh *MinHeap[T]) peek() *Value[T] {
+func (bh *SalaryMinHeap) peek() *Worker {
 	if bh.heapSize == 0 {
 		return nil
 	}
 	return bh.a[0]
 }
 
-func evaluateSalary(n, m int, incomingOrder *MinHeap[Order], vacantWorkers *MinHeap[Worker]) int {
-	workingOrders := &MinHeap[Worker]{a: make([]*Value[Worker], m), heapSize: 0}
+func (bh *TimeEndMinHeap) siftDown(i int) {
+	for bh.a[i].timeEnd < bh.a[(i-1)/2].timeEnd {
+		bh.a[i], bh.a[(i-1)/2] = bh.a[(i-1)/2], bh.a[i]
+		i = (i - 1) / 2
+	}
+}
+
+func (bh *TimeEndMinHeap) siftUp(i int) {
+	for 2*i+1 < bh.heapSize {
+		left, right := 2*i+1, 2*i+2
+		j := left
+		if right < bh.heapSize && bh.a[right].timeEnd < bh.a[left].timeEnd {
+			j = right
+		}
+		if bh.a[i].timeEnd <= bh.a[j].timeEnd {
+			break
+		}
+		bh.a[i], bh.a[j] = bh.a[j], bh.a[i]
+		i = j
+	}
+}
+
+func (bh *TimeEndMinHeap) getMin() *Worker {
+	if bh.heapSize == 0 {
+		panic("Underflow insert")
+	}
+	hmin := bh.a[0]
+	bh.a[0] = bh.a[bh.heapSize-1]
+	bh.heapSize--
+	bh.siftUp(0)
+
+	return hmin
+}
+
+func (bh *TimeEndMinHeap) insert(key *Worker) {
+	bh.heapSize += 1
+	bh.a[bh.heapSize-1] = key
+	bh.siftDown(bh.heapSize - 1)
+}
+
+func (bh *TimeEndMinHeap) build(arr []*Worker, N int) {
+	bh.a = arr
+	bh.heapSize = N
+	for i := bh.heapSize / 2; i >= 0; i-- {
+		bh.siftUp(i)
+	}
+}
+
+func (bh *TimeEndMinHeap) peek() *Worker {
+	if bh.heapSize == 0 {
+		return nil
+	}
+	return bh.a[0]
+}
+
+func evaluateSalary(m int, incomingOrder *Queue, vacantWorkers *SalaryMinHeap) int {
+	timeEndHeap := &TimeEndMinHeap{a: make([]*Worker, m), heapSize: 0}
 	var cost int
 
-	for incomingOrder.heapSize != 0 || workingOrders.heapSize != 0 {
+	for incomingOrder.size != 0 {
 		incomOrd := incomingOrder.peek()
-		workOrd := workingOrders.peek()
-		if workOrd != nil && (incomingOrder.heapSize == 0 || incomOrd.source.start >= workOrd.sortValue) {
-			workingOrders.getMin()
-			vacantWorkers.insert(&Value[Worker]{
-				source:    workOrd.source,
-				sortValue: workOrd.source.salary,
-			})
+		worker := timeEndHeap.peek()
+		if worker != nil && (incomingOrder.size == 0 || incomOrd.start >= worker.timeEnd) {
+			timeEndHeap.getMin()
+			vacantWorkers.insert(worker)
 		} else {
-			incomingOrder.getMin()
+			incomingOrder.pop()
 			if vacantWorkers.heapSize != 0 {
 				// Достаем самого дешевого шавермана
-				worker := vacantWorkers.getMin()
+				worker = vacantWorkers.getMin()
+				worker.timeEnd = incomOrd.start + incomOrd.length
 				// Назначение работника на поступивший заказ
-				workingOrders.insert(&Value[Worker]{
-					source:    worker.source,
-					sortValue: incomOrd.source.start + incomOrd.source.length,
-				})
-				cost += incomOrd.source.length * worker.source.salary
+				timeEndHeap.insert(worker)
+				cost += incomOrd.length * worker.salary
 			}
 		}
 	}
 	return cost
 }
 
+func test() {
+	n, m := int(10e5), int(10e5)
+	var shaurmen = make([]*Worker, n)
+	vacantWokers := new(SalaryMinHeap)
+	var incomingOrders = new(Queue)
+	for i := 0; i < n; i++ {
+		salary := rand.Intn(1000) + 1
+		shaurmen[i] = &Worker{salary: salary}
+	}
+	start := rand.Intn(10e4)
+	for i := 0; i < m; i++ {
+		t := start + rand.Intn(10e3)
+		f := t + rand.Intn(10e3) + 1
+		incomingOrders.push(&Order{start: t, length: f})
+	}
+	vacantWokers.build(shaurmen, n)
+	fmt.Println(evaluateSalary(m, incomingOrders, vacantWokers))
+}
+
 func main() {
+	test()
+	os.Exit(0)
 	out := bufio.NewWriter(os.Stdout)
 	var n, m int
 	fmt.Scan(&n, &m)
-	shaurmen := make([]*Value[Worker], n)
-	orders := make([]*Value[Order], m)
-	vacantWorkers := new(MinHeap[Worker])
-	incomingOrders := new(MinHeap[Order])
+	shaurmen := make([]*Worker, n)
+	incomingOrders := new(Queue)
+	vacantWorkers := new(SalaryMinHeap)
 
 	for i := 0; i < n; i++ {
 		var salary int
 		fmt.Scan(&salary)
-		shaurmen[i] = &Value[Worker]{
-			salary,
-			&Worker{salary: salary},
-		}
+		shaurmen[i] = &Worker{salary: salary}
 	}
 
 	for i := 0; i < m; i++ {
 		var t, f int
 		fmt.Scan(&t, &f)
-		orders[i] = &Value[Order]{
-			t,
-			&Order{start: t, length: f},
-		}
+		incomingOrders.push(&Order{start: t, length: f})
 	}
 
 	vacantWorkers.build(shaurmen, n)
-	incomingOrders.build(orders, m)
 
-	fmt.Fprintln(out, evaluateSalary(n, m, incomingOrders, vacantWorkers))
+	fmt.Fprintln(out, evaluateSalary(m, incomingOrders, vacantWorkers))
 	out.Flush()
 }
