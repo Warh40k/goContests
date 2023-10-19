@@ -187,22 +187,26 @@ func (bh *TimeEndMinHeap) peek() *Worker {
 func evaluateSalary(m int, incomingOrder *Queue, vacantWorkers *SalaryMinHeap) int {
 	timeEndHeap := &TimeEndMinHeap{a: make([]*Worker, m), heapSize: 0}
 	var cost int
+	var incomOrd *Order
+	var worker, vacant *Worker
 
 	for incomingOrder.size != 0 {
-		incomOrd := incomingOrder.peek()
-		worker := timeEndHeap.peek()
-		if worker != nil && (incomingOrder.size == 0 || incomOrd.start >= worker.timeEnd) {
+		incomOrd = incomingOrder.peek()
+		worker = timeEndHeap.peek()
+		if worker != nil && incomOrd.start >= worker.timeEnd {
+			//fmt.Println("Закончить работу")
 			timeEndHeap.getMin()
 			vacantWorkers.insert(worker)
 		} else {
+			//fmt.Println("Назначить заказ")
 			incomingOrder.pop()
 			if vacantWorkers.heapSize != 0 {
 				// Достаем самого дешевого шавермана
-				worker = vacantWorkers.getMin()
-				worker.timeEnd = incomOrd.start + incomOrd.length
+				vacant = vacantWorkers.getMin()
+				vacant.timeEnd = incomOrd.start + incomOrd.length
 				// Назначение работника на поступивший заказ
-				timeEndHeap.insert(worker)
-				cost += incomOrd.length * worker.salary
+				timeEndHeap.insert(vacant)
+				cost += incomOrd.length * vacant.salary
 			}
 		}
 	}
@@ -211,17 +215,18 @@ func evaluateSalary(m int, incomingOrder *Queue, vacantWorkers *SalaryMinHeap) i
 
 func test() {
 	n, m := int(10e5), int(10e5)
+	var t, f, salary int
 	var shaurmen = make([]*Worker, n)
 	vacantWokers := new(SalaryMinHeap)
 	var incomingOrders = new(Queue)
 	for i := 0; i < n; i++ {
-		salary := rand.Intn(1000) + 1
+		salary = rand.Intn(1000) + 1
 		shaurmen[i] = &Worker{salary: salary}
 	}
 	start := rand.Intn(10e4)
 	for i := 0; i < m; i++ {
-		t := start + rand.Intn(10e3)
-		f := t + rand.Intn(10e3) + 1
+		t = start + rand.Intn(10e3)
+		f = t + rand.Intn(10e3) + 1
 		incomingOrders.push(&Order{start: t, length: f})
 	}
 	vacantWokers.build(shaurmen, n)
@@ -229,23 +234,19 @@ func test() {
 }
 
 func main() {
-	test()
-	os.Exit(0)
 	out := bufio.NewWriter(os.Stdout)
-	var n, m int
+	var n, m, salary, t, f int
 	fmt.Scan(&n, &m)
 	shaurmen := make([]*Worker, n)
 	incomingOrders := new(Queue)
 	vacantWorkers := new(SalaryMinHeap)
 
 	for i := 0; i < n; i++ {
-		var salary int
 		fmt.Scan(&salary)
 		shaurmen[i] = &Worker{salary: salary}
 	}
 
 	for i := 0; i < m; i++ {
-		var t, f int
 		fmt.Scan(&t, &f)
 		incomingOrders.push(&Order{start: t, length: f})
 	}
