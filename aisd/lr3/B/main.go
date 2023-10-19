@@ -51,8 +51,12 @@ func (q *Queue[T]) pop() T {
 }
 
 type PriorityMinHeap struct {
-	k, heapSize int
-	a           [10e6]int
+	heapSize int
+	a        [10e6]int
+}
+
+type Heapy struct {
+	root int
 }
 
 func (bh *PriorityMinHeap) siftUp(i int) {
