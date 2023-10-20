@@ -50,81 +50,149 @@ func (q *Queue[T]) pop() T {
 	return val
 }
 
-type PriorityMinHeap struct {
-	heapSize int
-	a        [10e6]int
+type MinHeap struct {
+	head      *HeapNode
+	tail      *HeapNode
+	curparent *HeapNode
 }
 
-type Heapy struct {
-	root int
+type HeapNode struct {
+	index  int
+	value  int
+	left   *HeapNode
+	right  *HeapNode
+	next   *HeapNode
+	prev   *HeapNode
+	parent *HeapNode
 }
 
-func (bh *PriorityMinHeap) siftUp(i int) {
-	for bh.a[i] < bh.a[(i-1)/2] {
-		bh.a[i], bh.a[(i-1)/2] = bh.a[(i-1)/2], bh.a[i]
-		i = (i - 1) / 2
+func (bh *MinHeap) siftUp(node *HeapNode) {
+	for node.parent != nil && node.value < node.parent.value {
+		node.value, node.parent.value = node.parent.value, node.value
+		node = node.parent
 	}
 }
 
-func (bh *PriorityMinHeap) siftDown(i int) {
-	for 2*i+1 < bh.heapSize {
-		left, right := 2*i+1, 2*i+2
-		j := left
-		if right < bh.heapSize && bh.a[right] < bh.a[left] {
-			j = right
+func (bh *MinHeap) siftDown(node *HeapNode) {
+	//var swapee *HeapNode
+	//if node == nil {
+	//	return
+	//}
+	//if node.left == nil || node.right.value < node.left.value{
+	//	swapee = node.right
+	//} else if node.right == nil || node.left.value < node.right.value {
+	//	swapee = node.left
+	//}
+	//if swapee.value < node.value {
+	//	node.value, swapee.value = swapee.value, node.value
+	//}
+
+	for node.left != nil || node.right != nil {
+		var swapee *HeapNode
+		if (node.right == nil) || (node.left != nil && node.left.value <= node.right.value) {
+			swapee = node.left
+		} else if (node.left == nil) || (node.right != nil && node.right.value < node.left.value) {
+			swapee = node.right
 		}
-		if bh.a[i] <= bh.a[j] {
+
+		if swapee.value < node.value {
+			node.value, swapee.value = swapee.value, node.value
+			node = swapee
+		} else {
 			break
 		}
-		bh.a[i], bh.a[j] = bh.a[j], bh.a[i]
-		i = j
 	}
 }
 
-func (bh *PriorityMinHeap) insert(i int) {
-	bh.heapSize++
-	bh.a[bh.heapSize-1] = i
-	bh.siftUp(bh.heapSize - 1)
+func (bh *MinHeap) insert(i int) {
+	node := new(HeapNode)
+	node.value = i
+
+	if bh.head == nil {
+		bh.head = node
+		bh.tail = node
+		bh.curparent = node
+		node.index = 1
+		return
+	}
+	node.index = bh.tail.index + 1
+	position := node.index % 2
+
+	if position == 0 {
+		node.parent = bh.curparent
+		bh.curparent.left = node
+	} else {
+		node.parent = bh.tail.parent
+		bh.tail.parent.right = node
+		if bh.curparent.next != nil {
+			bh.curparent = bh.curparent.next
+		}
+	}
+	bh.tail.next = node
+	node.prev = bh.tail
+	bh.tail = node
+
+	bh.siftUp(node)
 }
 
-func (bh *PriorityMinHeap) getMin() string {
-	if bh.heapSize == 0 {
+func (bh *MinHeap) getMin() string {
+	if bh.tail == nil {
 		return "*"
 	}
-	hmax := bh.a[0]
-	bh.a[0] = bh.a[bh.heapSize-1]
-	bh.heapSize--
-	bh.siftDown(0)
+	if bh.head == bh.tail {
+		val := strconv.Itoa(bh.head.value)
+		bh.head = nil
+		bh.tail = nil
+
+		return val
+	}
+	hmax := bh.head.value
+	bh.head.value = bh.tail.value
+	if bh.tail.index%2 == 0 {
+		bh.tail.parent.left = nil
+		if bh.curparent.prev != nil {
+			bh.curparent = bh.curparent.prev
+		}
+	} else {
+		bh.tail.parent.right = nil
+	}
+	bh.tail = bh.tail.prev
+	bh.tail.next = nil
+	bh.siftDown(bh.head)
 
 	return strconv.Itoa(hmax)
 }
 
-func (bh *PriorityMinHeap) decreaseKey(x, y int) {
-	i := 0
-	for bh.a[i] != x {
-		i++
+func (bh *MinHeap) decreaseKey(x, y int) {
+	el := bh.head
+
+	for el != nil {
+		if el.value == x {
+			el.value = y
+			bh.siftUp(el)
+			break
+		}
+		el = el.next
 	}
-	bh.a[i] = y
-	bh.siftUp(i)
 }
 
 func (priors *Queue[T]) findPriority(k int) T {
-	var heap = priors.head
+	var qu = priors.head
 	for i := 0; i < k; i++ {
-		heap = heap.next
+		qu = qu.next
 	}
-	return heap.value
+	return qu.value
 }
 
 func executeCommands(commands *Queue[string]) *Queue[string] {
-	priors := new(Queue[*PriorityMinHeap])
+	priors := new(Queue[*MinHeap])
 	result := new(Queue[string])
 
 	for commands.size != 0 {
 
 		switch commands.pop() {
 		case "create":
-			priors.push(new(PriorityMinHeap))
+			priors.push(new(MinHeap))
 		case "insert":
 			k, _ := strconv.Atoi(commands.pop())
 			x, _ := strconv.Atoi(commands.pop())
@@ -140,13 +208,15 @@ func executeCommands(commands *Queue[string]) *Queue[string] {
 		case "merge":
 			k, _ := strconv.Atoi(commands.pop())
 			m, _ := strconv.Atoi(commands.pop())
-			kq, mq := priors.findPriority(k), priors.findPriority(m)
-			merged := new(PriorityMinHeap)
-			for i := 0; i < kq.heapSize; i++ {
-				merged.insert(kq.a[i])
+			kq, mq := priors.findPriority(k).head, priors.findPriority(m).head
+			merged := new(MinHeap)
+			for kq != nil {
+				merged.insert(kq.value)
+				kq = kq.next
 			}
-			for i := 0; i < mq.heapSize; i++ {
-				merged.insert(mq.a[i])
+			for mq != nil {
+				merged.insert(mq.value)
+				mq = mq.next
 			}
 			priors.push(merged)
 		}
@@ -155,12 +225,12 @@ func executeCommands(commands *Queue[string]) *Queue[string] {
 }
 
 func main() {
-	out := bufio.NewWriter(os.Stdout)
+	in, out := bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
 	commands := new(Queue[string])
 
 	for {
 		var cmd string
-		_, err := fmt.Scan(&cmd)
+		_, err := fmt.Fscan(in, &cmd)
 		if err == io.EOF {
 			break
 		}
