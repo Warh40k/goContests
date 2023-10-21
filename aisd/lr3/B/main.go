@@ -9,14 +9,25 @@ import (
 )
 
 type Queue[T any] struct {
-	size int
-	head *QNode[T]
-	tail *QNode[T]
+	size     int
+	head     *QNode[T]
+	tail     *QNode[T]
+	iterator *QNode[T]
 }
 
 type QNode[T any] struct {
 	value T
 	next  *QNode[T]
+}
+
+func (q *Queue[T]) resetIterator() {
+	q.iterator = q.head
+}
+
+func (q *Queue[T]) next() T {
+	res := q.iterator
+	q.iterator = q.iterator.next
+	return res.value
 }
 
 func (q *Queue[T]) push(el T) {
@@ -187,27 +198,28 @@ func (priors *Queue[T]) findPriority(k int) T {
 func executeCommands(commands *Queue[string]) *Queue[string] {
 	priors := new(Queue[*MinHeap])
 	result := new(Queue[string])
+	commands.resetIterator()
 
-	for commands.size != 0 {
+	for commands.iterator != nil {
 
-		switch commands.pop() {
+		switch commands.next() {
 		case "create":
 			priors.push(new(MinHeap))
 		case "insert":
-			k, _ := strconv.Atoi(commands.pop())
-			x, _ := strconv.Atoi(commands.pop())
+			k, _ := strconv.Atoi(commands.next())
+			x, _ := strconv.Atoi(commands.next())
 			priors.findPriority(k).insert(x)
 		case "extract-min":
-			k, _ := strconv.Atoi(commands.pop())
+			k, _ := strconv.Atoi(commands.next())
 			result.push(priors.findPriority(k).getMin())
 		case "decrease-key":
-			k, _ := strconv.Atoi(commands.pop())
-			x, _ := strconv.Atoi(commands.pop())
-			y, _ := strconv.Atoi(commands.pop())
+			k, _ := strconv.Atoi(commands.next())
+			x, _ := strconv.Atoi(commands.next())
+			y, _ := strconv.Atoi(commands.next())
 			priors.findPriority(k).decreaseKey(x, y)
 		case "merge":
-			k, _ := strconv.Atoi(commands.pop())
-			m, _ := strconv.Atoi(commands.pop())
+			k, _ := strconv.Atoi(commands.next())
+			m, _ := strconv.Atoi(commands.next())
 			kq, mq := priors.findPriority(k).head, priors.findPriority(m).head
 			merged := new(MinHeap)
 			for kq != nil {
@@ -239,12 +251,9 @@ func main() {
 
 	result := executeCommands(commands).head
 	for result != nil {
-		if result.next != nil {
-			fmt.Fprintln(out, result.value)
-		} else {
-			fmt.Fprint(out, result.value)
-		}
+		fmt.Fprintln(out, result.value)
 		result = result.next
 	}
+
 	out.Flush()
 }
