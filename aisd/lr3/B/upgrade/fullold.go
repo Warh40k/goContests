@@ -173,6 +173,8 @@ func ExecuteCommandsOlder(commands *Queue[string]) *Queue[string] {
 				j++
 			}
 			//merged.build(arrmerged, j)
+			merged.a = arrmerged
+			merged.HeapSize = j
 			priors[lastprior] = merged
 			lastprior++
 		}
