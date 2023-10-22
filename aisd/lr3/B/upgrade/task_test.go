@@ -7,16 +7,24 @@ import (
 )
 
 func TestOld(t *testing.T) {
-	commands := new(Queue[string])
-	commands.Push("create")
-	commands.Push("create")
-	for j := 0; j < 10; j++ {
-		commands.Push("insert 0" + strconv.Itoa(rand.Intn(10e9)))
-		commands.Push("insert 1" + strconv.Itoa(rand.Intn(10e9)))
+	commands := make([]string, 40e6)
+	commands[0] = "create"
+	commands[1] = "create"
+	var j int
+	for j = 2; j < 12; j = j + 3 {
+		commands[j] = "insert"
+		commands[j+1] = "0"
+		commands[j+2] = strconv.Itoa(rand.Intn(10e9))
 	}
-	for i := 0; i < 10e6; i++ {
-		commands.Push("merge 0 1")
+	for ; j < 22; j = j + 3 {
+		commands[j] = "insert"
+		commands[j+1] = "1"
+		commands[j+2] = strconv.Itoa(rand.Intn(10e9))
 	}
-	ExecuteCommandsOlder(commands)
-	t.Log("End")
+	for ; j < 10e6; j = j + 3 {
+		commands[j] = "merge"
+		commands[j+1] = "0"
+		commands[j+2] = "1"
+	}
+	ExecuteCommandsOlder(commands, j)
 }
