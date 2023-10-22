@@ -62,9 +62,9 @@ func (q *Queue[T]) Pop() T {
 }
 
 type PriorityMinHeap struct {
-	k, HeapSize int
-	a           [100]int
-	Heaped      bool
+	HeapSize int
+	a        [100]int
+	Heaped   bool
 }
 
 func (bh *PriorityMinHeap) siftUp(i int) {
@@ -90,10 +90,11 @@ func (bh *PriorityMinHeap) siftDown(i int) {
 }
 
 func (bh *PriorityMinHeap) insert(i int) {
-	bh.Heaped = false
 	bh.HeapSize++
 	bh.a[bh.HeapSize-1] = i
-	//bh.siftUp(bh.HeapSize - 1)
+	if bh.Heaped {
+		bh.siftUp(bh.HeapSize - 1)
+	}
 }
 
 func (bh *PriorityMinHeap) getMin() string {
@@ -101,7 +102,7 @@ func (bh *PriorityMinHeap) getMin() string {
 		return "*"
 	}
 	if !bh.Heaped {
-		bh.build(bh.a, bh.HeapSize)
+		bh.build(bh.HeapSize)
 		bh.Heaped = true
 	}
 	hmax := bh.a[0]
@@ -116,67 +117,75 @@ func (bh *PriorityMinHeap) decreaseKey(x, y int) {
 	for i := 0; i < bh.HeapSize; i++ {
 		if bh.a[i] == x {
 			bh.a[i] = y
-			bh.Heaped = false
-			//bh.siftUp(i)
+			bh.siftUp(i)
 			break
 		}
 	}
 }
 
-func (bh *PriorityMinHeap) build(arr [100]int, N int) {
-	bh.a = arr
+func (bh *PriorityMinHeap) build(N int) {
 	bh.HeapSize = N
 	for i := bh.HeapSize / 2; i >= 0; i-- {
 		bh.siftDown(i)
 	}
 }
 
-func ExecuteCommandsOlder(commands *Queue[string]) *Queue[string] {
+func ExecuteCommandsOlder(commands []string) *Queue[string] {
 	priors := make([]*PriorityMinHeap, 10e6)
 	result := new(Queue[string])
-	commands.ResetIterator()
 	lastprior := 0
-	for commands.Iterator != nil {
+	for i := 0; commands[i] != ""; i++ {
 
-		switch commands.Next() {
+		switch commands[i] {
 		case "create":
-			priors[lastprior] = new(PriorityMinHeap)
 			lastprior++
 		case "insert":
-			k, _ := strconv.Atoi(commands.Next())
-			x, _ := strconv.Atoi(commands.Next())
+			k, _ := strconv.Atoi(commands[i+1])
+			if priors[k] == nil {
+				priors[k] = new(PriorityMinHeap)
+			}
+			x, _ := strconv.Atoi(commands[i+2])
 			priors[k].insert(x)
+			i += 2
 		case "extract-min":
-			k, _ := strconv.Atoi(commands.Next())
-			result.Push(priors[k].getMin())
+			k, _ := strconv.Atoi(commands[i+1])
+			if priors[k] == nil {
+				result.Push("*")
+			} else {
+				result.Push(priors[k].getMin())
+			}
+			i += 1
 		case "decrease-key":
-			k, _ := strconv.Atoi(commands.Next())
-			x, _ := strconv.Atoi(commands.Next())
-			y, _ := strconv.Atoi(commands.Next())
-			priors[k].decreaseKey(x, y)
+			k, _ := strconv.Atoi(commands[i+1])
+			if priors[k] != nil {
+				x, _ := strconv.Atoi(commands[i+2])
+				y, _ := strconv.Atoi(commands[i+3])
+				priors[k].decreaseKey(x, y)
+			}
+			i += 3
 		case "merge":
-			k, _ := strconv.Atoi(commands.Next())
-			m, _ := strconv.Atoi(commands.Next())
+			k, _ := strconv.Atoi(commands[i+1])
+			m, _ := strconv.Atoi(commands[i+2])
 			kq, mq := priors[k], priors[m]
-			merged := new(PriorityMinHeap)
-			var arrmerged [100]int
-
-			j := 0
-			for i := 0; i < kq.HeapSize; i++ {
-				arrmerged[j] = kq.a[i]
-				//merged.insert(kq.a[i])
-				j++
+			if priors[k] != nil && priors[m] != nil {
+				merged := new(PriorityMinHeap)
+				j := 0
+				for d := 0; d < kq.HeapSize; d++ {
+					merged.a[j] = kq.a[d]
+					//merged.insert(kq.a[i])
+					j++
+				}
+				for d := 0; d < mq.HeapSize; d++ {
+					merged.a[j] = mq.a[d]
+					//merged.insert(mq.a[i])
+					j++
+				}
+				//merged.build(arrmerged, j)
+				merged.HeapSize = j
+				priors[lastprior] = merged
+				lastprior++
+				i += 2
 			}
-			for i := 0; i < mq.HeapSize; i++ {
-				arrmerged[j] = mq.a[i]
-				//merged.insert(mq.a[i])
-				j++
-			}
-			//merged.build(arrmerged, j)
-			merged.a = arrmerged
-			merged.HeapSize = j
-			priors[lastprior] = merged
-			lastprior++
 		}
 	}
 	return result
@@ -184,15 +193,13 @@ func ExecuteCommandsOlder(commands *Queue[string]) *Queue[string] {
 
 func main() {
 	out := bufio.NewWriter(os.Stdout)
-	commands := new(Queue[string])
-
-	for {
-		var cmd string
-		_, err := fmt.Scan(&cmd)
+	commands := make([]string, 40e6)
+	var i int
+	for i = 0; i < 10e6; i++ {
+		_, err := fmt.Scan(&commands[i])
 		if err == io.EOF {
 			break
 		}
-		commands.Push(cmd)
 	}
 
 	result := ExecuteCommandsOlder(commands).Head
