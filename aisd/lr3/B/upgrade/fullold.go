@@ -103,7 +103,6 @@ func (bh *PriorityMinHeap) getMin() string {
 	}
 	if !bh.Heaped {
 		bh.build(bh.HeapSize)
-		bh.Heaped = true
 	}
 	hmax := bh.a[0]
 	bh.a[0] = bh.a[bh.HeapSize-1]
@@ -117,7 +116,9 @@ func (bh *PriorityMinHeap) decreaseKey(x, y int) {
 	for i := 0; i < bh.HeapSize; i++ {
 		if bh.a[i] == x {
 			bh.a[i] = y
-			bh.siftUp(i)
+			if bh.Heaped {
+				bh.siftUp(i)
+			}
 			break
 		}
 	}
@@ -128,44 +129,41 @@ func (bh *PriorityMinHeap) build(N int) {
 	for i := bh.HeapSize / 2; i >= 0; i-- {
 		bh.siftDown(i)
 	}
+	bh.Heaped = true
 }
 
-func ExecuteCommandsOlder(commands []string) *Queue[string] {
+func ExecuteCommandsOlder(commands *Queue[string]) *Queue[string] {
 	priors := make([]*PriorityMinHeap, 10e6)
 	result := new(Queue[string])
+	commands.ResetIterator()
 	lastprior := 0
-	for i := 0; commands[i] != ""; i++ {
+	for commands.Iterator != nil {
 
-		switch commands[i] {
+		switch commands.Next() {
 		case "create":
+			priors[lastprior] = new(PriorityMinHeap)
 			lastprior++
 		case "insert":
-			k, _ := strconv.Atoi(commands[i+1])
-			if priors[k] == nil {
-				priors[k] = new(PriorityMinHeap)
-			}
-			x, _ := strconv.Atoi(commands[i+2])
+			k, _ := strconv.Atoi(commands.Next())
+			x, _ := strconv.Atoi(commands.Next())
 			priors[k].insert(x)
-			i += 2
 		case "extract-min":
-			k, _ := strconv.Atoi(commands[i+1])
+			k, _ := strconv.Atoi(commands.Next())
 			if priors[k] == nil {
 				result.Push("*")
 			} else {
 				result.Push(priors[k].getMin())
 			}
-			i += 1
 		case "decrease-key":
-			k, _ := strconv.Atoi(commands[i+1])
+			k, _ := strconv.Atoi(commands.Next())
 			if priors[k] != nil {
-				x, _ := strconv.Atoi(commands[i+2])
-				y, _ := strconv.Atoi(commands[i+3])
+				x, _ := strconv.Atoi(commands.Next())
+				y, _ := strconv.Atoi(commands.Next())
 				priors[k].decreaseKey(x, y)
 			}
-			i += 3
 		case "merge":
-			k, _ := strconv.Atoi(commands[i+1])
-			m, _ := strconv.Atoi(commands[i+2])
+			k, _ := strconv.Atoi(commands.Next())
+			m, _ := strconv.Atoi(commands.Next())
 			kq, mq := priors[k], priors[m]
 			if priors[k] != nil && priors[m] != nil {
 				merged := new(PriorityMinHeap)
@@ -184,7 +182,6 @@ func ExecuteCommandsOlder(commands []string) *Queue[string] {
 				merged.HeapSize = j
 				priors[lastprior] = merged
 				lastprior++
-				i += 2
 			}
 		}
 	}
@@ -193,13 +190,15 @@ func ExecuteCommandsOlder(commands []string) *Queue[string] {
 
 func main() {
 	out := bufio.NewWriter(os.Stdout)
-	commands := make([]string, 40e6)
+	commands := new(Queue[string])
 	var i int
 	for i = 0; i < 10e6; i++ {
-		_, err := fmt.Scan(&commands[i])
+		var cmd string
+		_, err := fmt.Scan(&cmd)
 		if err == io.EOF {
 			break
 		}
+		commands.Push(cmd)
 	}
 
 	result := ExecuteCommandsOlder(commands).Head
