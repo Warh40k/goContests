@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime/debug"
 	"strconv"
 )
 
@@ -14,9 +13,9 @@ type Vector[T any] struct {
 	size, cap int
 }
 
-func (v *Vector[T]) build(size int) {
-	v.A = make([]T, size)
-	v.cap = size
+func (v *Vector[T]) build(cap int) {
+	v.A = make([]T, cap)
+	v.cap = cap
 }
 
 func (v *Vector[T]) append(val T) {
@@ -160,40 +159,41 @@ func (bh *PriorityMinHeap) build(N int) {
 	bh.Heaped = true
 }
 
-func ExecuteCommandsOlder(commands *Queue[string]) *Queue[string] {
-	priors := make([]*PriorityMinHeap, 10e6)
+func ExecuteCommandsOlder(commands *Vector[string]) *Queue[string] {
+	priors := new(Vector[*PriorityMinHeap])
+	priors.build(10)
 	result := new(Queue[string])
-	commands.ResetIterator()
-	lastprior := 0
-	for commands.Iterator != nil {
+	for i := 0; i < commands.size; i++ {
 
-		switch commands.Next() {
+		switch commands.A[i] {
 		case "create":
-			priors[lastprior] = new(PriorityMinHeap)
-			lastprior++
+			priors.append(new(PriorityMinHeap))
 		case "insert":
-			k, _ := strconv.Atoi(commands.Next())
-			x, _ := strconv.Atoi(commands.Next())
-			priors[k].insert(x)
+			k, _ := strconv.Atoi(commands.A[i+1])
+			x, _ := strconv.Atoi(commands.A[i+2])
+			priors.A[k].insert(x)
+			i += 2
 		case "extract-min":
-			k, _ := strconv.Atoi(commands.Next())
-			if priors[k] == nil {
+			k, _ := strconv.Atoi(commands.A[i+1])
+			if priors.A[k] == nil {
 				result.Push("*")
 			} else {
-				result.Push(priors[k].getMin())
+				result.Push(priors.A[k].getMin())
 			}
+			i += 1
 		case "decrease-key":
-			k, _ := strconv.Atoi(commands.Next())
-			if priors[k] != nil {
-				x, _ := strconv.Atoi(commands.Next())
-				y, _ := strconv.Atoi(commands.Next())
-				priors[k].decreaseKey(x, y)
+			k, _ := strconv.Atoi(commands.A[i+1])
+			if priors.A[k] != nil {
+				x, _ := strconv.Atoi(commands.A[i+2])
+				y, _ := strconv.Atoi(commands.A[i+3])
+				priors.A[k].decreaseKey(x, y)
 			}
+			i += 3
 		case "merge":
-			k, _ := strconv.Atoi(commands.Next())
-			m, _ := strconv.Atoi(commands.Next())
-			kq, mq := priors[k], priors[m]
-			if priors[k] != nil && priors[m] != nil {
+			k, _ := strconv.Atoi(commands.A[i+1])
+			m, _ := strconv.Atoi(commands.A[i+2])
+			kq, mq := priors.A[k], priors.A[m]
+			if priors.A[k] != nil && priors.A[m] != nil {
 				merged := new(PriorityMinHeap)
 				j := 0
 				for d := 0; d < kq.HeapSize; d++ {
@@ -208,26 +208,25 @@ func ExecuteCommandsOlder(commands *Queue[string]) *Queue[string] {
 				}
 				//merged.build(arrmerged, j)
 				merged.HeapSize = j
-				priors[lastprior] = merged
-				lastprior++
+				priors.append(merged)
 			}
+			i += 2
 		}
 	}
 	return result
 }
 
 func main() {
-	debug.SetGCPercent(-1)
 	out := bufio.NewWriter(os.Stdout)
-	commands := new(Queue[string])
-	var i int
-	for i = 0; i < 10e6; i++ {
+	commands := new(Vector[string])
+	commands.build(10)
+	for {
 		var cmd string
 		_, err := fmt.Scan(&cmd)
 		if err == io.EOF {
 			break
 		}
-		commands.Push(cmd)
+		commands.append(cmd)
 	}
 
 	result := ExecuteCommandsOlder(commands).Head
