@@ -5,8 +5,36 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"runtime/debug"
 	"strconv"
 )
+
+type Vector[T any] struct {
+	A         []T
+	size, cap int
+}
+
+func (v *Vector[T]) build(size int) {
+	v.A = make([]T, size)
+	v.cap = size
+}
+
+func (v *Vector[T]) append(val T) {
+	if v.size == v.cap {
+		temp := make([]T, v.cap*2)
+		for i := 0; i < v.size; i++ {
+			temp[i] = v.A[i]
+		}
+		v.A = temp
+		v.cap = v.cap * 2
+	}
+	v.A[v.size] = val
+	v.size++
+}
+
+func (v *Vector[T]) delete() {
+	v.size--
+}
 
 type Queue[T any] struct {
 	Size     int64
@@ -189,6 +217,7 @@ func ExecuteCommandsOlder(commands *Queue[string]) *Queue[string] {
 }
 
 func main() {
+	debug.SetGCPercent(-1)
 	out := bufio.NewWriter(os.Stdout)
 	commands := new(Queue[string])
 	var i int
