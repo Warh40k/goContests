@@ -20,7 +20,10 @@ type QNode struct {
 }
 
 func NewQueue() *Queue {
-	q := &Queue{}
+	q := &Queue{
+		curLine: 1,
+		lines:   1,
+	}
 	qnode := &QNode{
 		value: inputStart,
 		next:  nil,
@@ -57,12 +60,7 @@ func (q *Queue) moveUp() {
 	q.goHome()
 	newPos := 0
 	for i := 0; i < oldPos; i++ {
-		if q.cur == nil {
-			q.cur = q.head
-			if q.cur.value == 10 {
-				break
-			}
-		} else if q.cur.next == nil || q.cur.next.value == '\n' {
+		if q.cur.next == nil || q.cur.next.value == '\n' {
 			break
 		} else {
 			q.cur = q.cur.next
@@ -93,22 +91,13 @@ func (q *Queue) moveDown() {
 }
 
 func (q *Queue) goHome() {
-	if q.head == nil {
-		return
-	}
-	for q.cur != nil && q.cur.value != '\n' {
+	for q.cur.value != inputStart && q.cur.value != '\n' {
 		q.cur = q.cur.prev
 	}
 	q.linePos = 0
 }
 
 func (q *Queue) goEnd() {
-	if q.head == nil {
-		return
-	}
-	if q.cur == nil {
-		q.cur = q.head
-	}
 	for q.cur.next != nil && q.cur.next.value != '\n' {
 		q.cur = q.cur.next
 		q.linePos++
@@ -118,9 +107,6 @@ func (q *Queue) goEnd() {
 func (q *Queue) newLine() {
 	q.insert('\n')
 	q.cur = q.cur.next
-	if q.cur == nil {
-		q.cur = q.head
-	}
 	q.linePos = 0
 	q.curLine++
 	q.lines++
@@ -164,7 +150,7 @@ func getOutput(input string) string {
 			term.insert(char)
 		}
 	}
-	pointer := term.head
+	pointer := term.head.next
 	for i := 0; i < term.size; i++ {
 		out = append(out, pointer.value)
 		pointer = pointer.next
