@@ -26,47 +26,51 @@ func getMaxSet(cardVal string, cardsOnHands map[string]bool) []string {
 	return result
 }
 
-func countPlayerValue(player [2]string, set1, set2 []string) (int, []string) {
-	val1, val2 := cardValues[string(player[0][0])], cardValues[string(player[1][0])]
+func countPlayerValue(player [2]string, sets [2][]string) [2]int {
+	var vals = [2]int{cardValues[string(player[0][0])], cardValues[string(player[1][0])]}
 
-	ratio1, ratio2 := 1, 1
+	var ratios = [2]int{}
+	var setVals = [2]int{}
+
 	if player[0][0] == player[1][0] {
-		ratio1++
-		ratio2++
-	}
-	if len(set1) != 0 {
-		ratio1++
-	}
-	if len(set2) != 0 {
-		ratio2++
+		ratios[0]++
+		ratios[1]++
 	}
 
-	setVal1, setVal2 := val1*ratio1, val2*ratio2
-	maxVal := setVal1
-	maxSet := set1
-	if setVal2 > setVal1 {
-		maxVal = setVal2
-		maxSet = set2
+	for i := range sets {
+		if len(sets[i]) != 0 {
+			ratios[i]++
+		}
+		setVals[i] = vals[i] * ratios[i]
 	}
 
-	return maxVal, maxSet
+	return setVals
 }
 
-func getWinCards(playersCards [][2]string) {
+func getWinCards(playersCards [][2]string, cardsOnHands map[string]bool) []string {
 	fp := playersCards[0]
-	fpSet1, fpSet2 := getMaxSet(string(fp[0][1])), getMaxSet(string(fp[1][1]))
+	var fpSets = [2][]string{getMaxSet(string(fp[0][1]), cardsOnHands), getMaxSet(string(fp[1][1]), cardsOnHands)}
 
-	fpValue, fpSet := countPlayerValue(fp, fpSet1, fpSet2)
+	fpValues := countPlayerValue(fp, fpSets)
 
 	for i := 1; i < len(playersCards); i++ {
 		ratio1, ratio2 := 1, 1
 		player := playersCards[i]
-		maxScore := 0
-		for j := 0; j < len(fpSet); j++ {
-			if player[0][0] == fpSet[0][0] {
-
+		for j := 0; j < len(fpSets); j++ {
+			if ratio1 != 1 && player[0][0] == fpSets[j][0] {
+				ratio1++
+			}
+			if ratio2 != 1 && player[1][0] == fpSets[j][0] {
+				ratio2++
 			}
 		}
+		if player[0][0] == player[1][0] {
+			ratio1++
+			ratio2++
+		}
+
+		val1, val2 := cardValues[string(player[0][0])], cardValues[string(player[1][0])]
+		setVal1, setVal2 := val1*ratio1, val2*ratio2
 	}
 }
 
