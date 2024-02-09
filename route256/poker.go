@@ -10,7 +10,7 @@ const (
 	cardCount = 52
 )
 
-var cardValues = map[string]int{"2": 0, "3": 1, "4": 2, "5": 3, "6": 4, "7": 5, "8": 6, "9": 7, "T": 8, "J": 9, "Q": 10, "K": 11, "A": 12}
+var cardValues = map[string]int{"2": 1, "3": 2, "4": 3, "5": 4, "6": 5, "7": 6, "8": 7, "9": 8, "T": 9, "J": 10, "Q": 11, "K": 12, "A": 13}
 var cardMast = []string{"S", "C", "D", "H"}
 
 func getMaxSet(cardVal string, cardsOnHands map[string]bool) []string {
@@ -26,52 +26,57 @@ func getMaxSet(cardVal string, cardsOnHands map[string]bool) []string {
 	return result
 }
 
-func countPlayerValue(player [2]string, sets [2][]string) [2]int {
+func countPlayerValue(player [2]string, card string) int {
 	var vals = [2]int{cardValues[string(player[0][0])], cardValues[string(player[1][0])]}
 
-	var ratios = [2]int{}
+	var combos = [2]int{}
 	var setVals = [2]int{}
 
 	if player[0][0] == player[1][0] {
-		ratios[0]++
-		ratios[1]++
+		combos[0]++
+		combos[1]++
 	}
 
-	for i := range sets {
-		if len(sets[i]) != 0 {
-			ratios[i]++
+	for i := range player {
+		if player[i][0] == card[0] {
+			combos[i]++
 		}
-		setVals[i] = vals[i] * ratios[i]
+		setVals[i] = vals[i] + 14*combos[i]
 	}
+	maxVal := setVals[0]
+	if setVals[1] > setVals[0] {
+		maxVal = setVals[1]
+	}
+	return maxVal
+}
 
-	return setVals
+func checkWin(playersCards [][2]string, card string, fpVal int) bool {
+	for j := 1; j < len(playersCards); j++ {
+		player := playersCards[j]
+		playerVal := countPlayerValue(player, card)
+		if playerVal > fpVal {
+			return false
+		}
+	}
+	return true
 }
 
 func getWinCards(playersCards [][2]string, cardsOnHands map[string]bool) []string {
 	fp := playersCards[0]
-	var fpSets = [2][]string{getMaxSet(string(fp[0][1]), cardsOnHands), getMaxSet(string(fp[1][1]), cardsOnHands)}
-
-	fpValues := countPlayerValue(fp, fpSets)
-
-	for i := 1; i < len(playersCards); i++ {
-		ratio1, ratio2 := 1, 1
-		player := playersCards[i]
-		for j := 0; j < len(fpSets); j++ {
-			if ratio1 != 1 && player[0][0] == fpSets[j][0] {
-				ratio1++
+	var winCards []string
+	for val, _ := range cardValues {
+		for i := range cardMast {
+			card := val + cardMast[i]
+			if _, ok := cardsOnHands[card]; ok == true {
+				continue
 			}
-			if ratio2 != 1 && player[1][0] == fpSets[j][0] {
-				ratio2++
+			fpVal := countPlayerValue(fp, card)
+			if checkWin(playersCards, card, fpVal) {
+				winCards = append(winCards, card)
 			}
 		}
-		if player[0][0] == player[1][0] {
-			ratio1++
-			ratio2++
-		}
-
-		val1, val2 := cardValues[string(player[0][0])], cardValues[string(player[1][0])]
-		setVal1, setVal2 := val1*ratio1, val2*ratio2
 	}
+	return winCards
 }
 
 func main() {
@@ -83,14 +88,18 @@ func main() {
 
 	for i := 0; i < l; i++ {
 		var n int
-		playersCards := make([][2]string, l)
 		var cardsOnHands = map[string]bool{}
 		fmt.Fscan(in, &n)
+		playersCards := make([][2]string, n)
 		for j := 0; j < n; j++ {
 			fmt.Fscan(in, &playersCards[j][0], &playersCards[j][1])
 			cardsOnHands[playersCards[j][0]] = true
 			cardsOnHands[playersCards[j][1]] = true
 		}
-		getWinCards(playersCards)
+		winCards := getWinCards(playersCards, cardsOnHands)
+		fmt.Fprintln(out, len(winCards))
+		for j := range winCards {
+			fmt.Fprintln(out, winCards[j])
+		}
 	}
 }
