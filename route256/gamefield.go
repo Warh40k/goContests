@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 )
 
 func getWidthHeight(x, y int, field *[][]rune) (int, int) {
@@ -42,31 +41,19 @@ func eraseVisitedRectangle(x, y, w, h int, field *[][]rune) {
 	}
 }
 
-func printField(field [][]rune) string {
-	var result strings.Builder
-	for i := 0; i < len(field); i++ {
-		result.WriteString(string(field[i]) + "\n")
-	}
-
-	return result.String()
-}
-
-func analyzeRectangle(x, y, width, height int, field *[][]rune, counts *[]int) int {
-	var nestedCount int
+func analyzeRectangle(x, y, width, height, depth int, field *[][]rune, counts *[]int) {
 	for i := y; i < y+height-2; i++ {
 		for j := x; j < x+width-2; j++ {
 			if (*field)[i][j] == '*' {
-				nestedCount++
-				pfield := printField(*field)
-				fmt.Println(pfield)
+				//pfield := printField(*field)
+				//fmt.Println(pfield)
 				newWidth, newHeight := getWidthHeight(j, i, field)
-				*counts = append(*counts, analyzeRectangle(j+1, i+1, newWidth, newHeight, field, counts))
+				*counts = append(*counts, depth)
+				analyzeRectangle(j+1, i+1, newWidth, newHeight, depth+1, field, counts)
 				eraseVisitedRectangle(j, i, newWidth, newHeight, field)
 			}
 		}
 	}
-
-	return nestedCount
 }
 
 func main() {
@@ -87,7 +74,7 @@ func main() {
 			field[j] = []rune(line)
 		}
 
-		analyzeRectangle(0, 0, m, n, &field, &counts)
+		analyzeRectangle(0, 0, m, n, 0, &field, &counts)
 		sort.Ints(counts)
 		for j := range counts {
 			fmt.Fprintf(out, "%d ", counts[j])
