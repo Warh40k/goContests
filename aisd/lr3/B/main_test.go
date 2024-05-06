@@ -1,8 +1,12 @@
 package main
 
 import (
+	"goContests/aisd/lr3/B/qu"
+	"math"
 	"math/rand"
+	"reflect"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -27,86 +31,73 @@ func TestHeap(t *testing.T) {
 
 func TestAlgo(t *testing.T) {
 	for {
-		commands1 := new(Queue[string])
-		commands1.push("create")
-		commands1.push("create")
-		commands2 := new(Queue[string])
-		commands2.push("create")
-		commands2.push("create")
-		cmdNames := []string{"create", "merge", "insert", "extract-min"}
+		commands := new(qu.Queue[string])
+		commands.Push("create")
+		cmdNames := []string{"create", "merge", "insert", "extract-min", "decrease-key"}
 		var i int
-		for i = 2; i < 7; i++ {
+		for i = 1; i < 5; i++ {
 			command := cmdNames[rand.Intn(2)]
 			if command == "merge" {
 				a, b := strconv.Itoa(rand.Intn(i)), strconv.Itoa(rand.Intn(i))
-				//command = strings.Join([]string{command, a, b}, " ")
-				commands1.push(command)
-				commands1.push(a)
-				commands1.push(b)
-				commands2.push(a)
-				commands2.push(b)
-				commands2.push(command)
+				commands.Push(command)
+				commands.Push(a)
+				commands.Push(b)
 			} else {
-				commands1.push(command)
-				commands2.push(command)
+				commands.Push(command)
 			}
 		}
-		for j := 0; j < 30; j++ {
-			command := cmdNames[rand.Intn(4)]
+		for j := 0; j < 20; j++ {
+			command := cmdNames[rand.Intn(5)]
 			if command == "merge" {
 				a, b := strconv.Itoa(rand.Intn(i)), strconv.Itoa(rand.Intn(i))
-				//command += strings.Join([]string{command, a, b}, " ")
-				commands1.push(command)
-				commands1.push(a)
-				commands1.push(b)
-				commands2.push(command)
-				commands2.push(a)
-				commands2.push(b)
+				commands.Push(command)
+				commands.Push(a)
+				commands.Push(b)
 			} else if command == "insert" {
-				//command = strings.Join([]string{command, strconv.Itoa(rand.Intn(i + 1)), strconv.Itoa(30)}, " ")
-				commands1.push(command)
-				commands1.push(strconv.Itoa(rand.Intn(i)))
-				commands1.push(strconv.Itoa(rand.Intn(30)))
-				commands2.push(command)
-				commands2.push(strconv.Itoa(rand.Intn(i)))
-				commands2.push(strconv.Itoa(rand.Intn(30)))
+				commands.Push(command)
+				commands.Push(strconv.Itoa(rand.Intn(i)))
+				commands.Push(strconv.Itoa(-1 * rand.Intn(2) * rand.Intn(10)))
 
 			} else if command == "extract-min" {
-				//command = command + " " + strconv.Itoa(rand.Intn(i+1))
-				commands1.push(command)
-				commands1.push(strconv.Itoa(rand.Intn(i)))
-				commands2.push(command)
-				commands2.push(strconv.Itoa(rand.Intn(i)))
+				commands.Push(command)
+				commands.Push(strconv.Itoa(rand.Intn(i)))
 			} else if command == "decrease-key" {
-				old := rand.Intn(rand.Intn(30)) + 1
-				neww := rand.Intn(old + 1)
-				//command = command + strconv.Itoa(rand.Intn(i+1)) + " " + strconv.Itoa(old) + " " + strconv.Itoa(neww)
-				commands1.push(command)
-				commands1.push(strconv.Itoa(rand.Intn(i)))
-				commands1.push(strconv.Itoa(old))
-				commands1.push(strconv.Itoa(neww))
-				commands2.push(command)
-				commands2.push(strconv.Itoa(rand.Intn(i)))
-				commands2.push(strconv.Itoa(old))
-				commands2.push(strconv.Itoa(neww))
+				sign := []int{-1, 1}[rand.Intn(2)]
+				old := sign * rand.Intn(10)
+				neww := sign * rand.Intn(int(math.Abs(float64(old)))+1)
+
+				commands.Push(command)
+				commands.Push(strconv.Itoa(rand.Intn(i)))
+				commands.Push(strconv.Itoa(old))
+				commands.Push(strconv.Itoa(neww))
 			}
 
 		}
-		comarr := make([]string, commands1.size)
-		com := commands1.head
-		for i := 0; i < commands1.size; i++ {
-			comarr[i] = com.value
-			com = com.next
+		for j := 0; j < 100; j++ {
+			commands.Push("extract-min " + strconv.Itoa(rand.Intn(i)))
+		}
+		comarr := make([]string, commands.Size)
+		com := commands.Head
+		for j := int64(0); j < commands.Size; j++ {
+			comarr[j] = com.Value
+			com = com.Next
 		}
 
-		//coms := strings.Join(comarr, "\n")
+		coms := strings.Join(comarr, "\n")
+		reflect.TypeOf(coms)
 
-		result1 := executeCommands(commands1).head
-		//result2 := executeCommandsOld(commands2).head
+		result1 := executeCommands(commands)
+		result2 := executeCommandsOld(commands)
+		result1.ResetIterator()
+		result2.ResetIterator()
 
-		for i := 0; i < 100 && result1 != nil; i++ {
-
+		for result1.Iterator != nil {
+			val1, val2 := result1.Next(), result2.Next()
+			if val1 != val2 {
+				t.Fatalf("Incorrect, got %s, expected %s", val1, val2)
+			}
 		}
+		t.Log("Passed")
 	}
 
 }

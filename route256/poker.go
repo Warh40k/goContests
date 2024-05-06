@@ -27,7 +27,8 @@ func getMaxSet(cardVal string, cardsOnHands map[string]bool) []string {
 }
 
 func countPlayerValue(player [2]string, card string) int {
-	var vals = [2]int{cardValues[string(player[0][0])], cardValues[string(player[1][0])]}
+	var handVals = [2]int{cardValues[string(player[0][0])], cardValues[string(player[1][0])]}
+	var cardVal = cardValues[string(card[0])]
 
 	var combos = [2]int{}
 	var setVals = [2]int{}
@@ -41,7 +42,14 @@ func countPlayerValue(player [2]string, card string) int {
 		if player[i][0] == card[0] {
 			combos[i]++
 		}
-		setVals[i] = vals[i] + 14*combos[i]
+		if combos[i] == 0 {
+			setVals[i] = handVals[i]
+			if cardVal > handVals[i] {
+				setVals[i] = cardVal
+			}
+		} else {
+			setVals[i] = handVals[i] + 14*combos[i]
+		}
 	}
 	maxVal := setVals[0]
 	if setVals[1] > setVals[0] {
@@ -80,6 +88,12 @@ func getWinCards(playersCards [][2]string, cardsOnHands map[string]bool) []strin
 }
 
 func main() {
+	//file, err := os.Create("result.poker")
+	//if err != nil {
+	//	panic(err)
+	//}
+	//defer file.Close()
+
 	in, out := bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
 	defer out.Flush()
 

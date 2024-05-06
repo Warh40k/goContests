@@ -96,7 +96,7 @@ func main() {
 }
 
 func parseFormula(formula string) string {
-	// Количества элементов в формуле (от A до Z)
+	// Количества элементов в формуле (от arr до Z)
 	var elems [26]int
 	var elemCount int
 	length := len(formula)

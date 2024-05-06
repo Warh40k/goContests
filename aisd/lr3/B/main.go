@@ -3,13 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"goContests/aisd/lr3/B/qu"
 	"io"
 	"os"
 	"strconv"
 )
 
 type Queue[T any] struct {
-	size     int
+	size     int64
 	head     *QNode[T]
 	tail     *QNode[T]
 	iterator *QNode[T]
@@ -68,8 +69,8 @@ type MinHeap struct {
 }
 
 type HeapNode struct {
-	index  int
-	value  int
+	index  int64
+	value  int64
 	left   *HeapNode
 	right  *HeapNode
 	next   *HeapNode
@@ -115,7 +116,7 @@ func (bh *MinHeap) siftDown(node *HeapNode) {
 	}
 }
 
-func (bh *MinHeap) insert(i int) {
+func (bh *MinHeap) insert(i int64) {
 	node := new(HeapNode)
 	node.value = i
 
@@ -151,7 +152,7 @@ func (bh *MinHeap) getMin() string {
 		return "*"
 	}
 	if bh.head == bh.tail {
-		val := strconv.Itoa(bh.head.value)
+		val := strconv.FormatInt(bh.head.value, 10)
 		bh.head = nil
 		bh.tail = nil
 
@@ -171,10 +172,10 @@ func (bh *MinHeap) getMin() string {
 	bh.tail.next = nil
 	bh.siftDown(bh.head)
 
-	return strconv.Itoa(hmax)
+	return strconv.FormatInt(hmax, 10)
 }
 
-func (bh *MinHeap) decreaseKey(x, y int) {
+func (bh *MinHeap) decreaseKey(x, y int64) {
 	el := bh.head
 
 	for el != nil {
@@ -187,40 +188,40 @@ func (bh *MinHeap) decreaseKey(x, y int) {
 	}
 }
 
-func (priors *Queue[T]) findPriority(k int) T {
+func (priors *Queue[T]) findPriority(k int64) T {
 	var qu = priors.head
-	for i := 0; i < k; i++ {
+	for i := int64(0); i < k; i++ {
 		qu = qu.next
 	}
 	return qu.value
 }
 
-func executeCommands(commands *Queue[string]) *Queue[string] {
-	priors := new(Queue[*MinHeap])
-	result := new(Queue[string])
-	commands.resetIterator()
+func executeCommands(commands *qu.Queue[string]) *qu.Queue[string] {
+	priors := new(qu.Queue[*MinHeap])
+	result := new(qu.Queue[string])
+	commands.ResetIterator()
 
-	for commands.iterator != nil {
+	for commands.Iterator != nil {
 
-		switch commands.next() {
+		switch commands.Next() {
 		case "create":
-			priors.push(new(MinHeap))
+			priors.Push(new(MinHeap))
 		case "insert":
-			k, _ := strconv.Atoi(commands.next())
-			x, _ := strconv.Atoi(commands.next())
-			priors.findPriority(k).insert(x)
+			k, _ := strconv.ParseInt(commands.Next(), 10, 64)
+			x, _ := strconv.ParseInt(commands.Next(), 10, 64)
+			priors.FindPriority(k).insert(x)
 		case "extract-min":
-			k, _ := strconv.Atoi(commands.next())
-			result.push(priors.findPriority(k).getMin())
+			k, _ := strconv.ParseInt(commands.Next(), 10, 64)
+			result.Push(priors.FindPriority(k).getMin())
 		case "decrease-key":
-			k, _ := strconv.Atoi(commands.next())
-			x, _ := strconv.Atoi(commands.next())
-			y, _ := strconv.Atoi(commands.next())
-			priors.findPriority(k).decreaseKey(x, y)
+			k, _ := strconv.ParseInt(commands.Next(), 10, 64)
+			x, _ := strconv.ParseInt(commands.Next(), 10, 64)
+			y, _ := strconv.ParseInt(commands.Next(), 10, 64)
+			priors.FindPriority(k).decreaseKey(x, y)
 		case "merge":
-			k, _ := strconv.Atoi(commands.next())
-			m, _ := strconv.Atoi(commands.next())
-			kq, mq := priors.findPriority(k).head, priors.findPriority(m).head
+			k, _ := strconv.ParseInt(commands.Next(), 10, 64)
+			m, _ := strconv.ParseInt(commands.Next(), 10, 64)
+			kq, mq := priors.FindPriority(k).head, priors.FindPriority(m).head
 			merged := new(MinHeap)
 			for kq != nil {
 				merged.insert(kq.value)
@@ -230,7 +231,7 @@ func executeCommands(commands *Queue[string]) *Queue[string] {
 				merged.insert(mq.value)
 				mq = mq.next
 			}
-			priors.push(merged)
+			priors.Push(merged)
 		}
 	}
 	return result
@@ -238,7 +239,7 @@ func executeCommands(commands *Queue[string]) *Queue[string] {
 
 func main() {
 	in, out := bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
-	commands := new(Queue[string])
+	commands := new(qu.Queue[string])
 
 	for {
 		var cmd string
@@ -246,13 +247,13 @@ func main() {
 		if err == io.EOF {
 			break
 		}
-		commands.push(cmd)
+		commands.Push(cmd)
 	}
 
-	result := executeCommands(commands).head
+	result := executeCommands(commands).Head
 	for result != nil {
-		fmt.Fprintln(out, result.value)
-		result = result.next
+		fmt.Fprintln(out, result.Value)
+		result = result.Next
 	}
 
 	out.Flush()

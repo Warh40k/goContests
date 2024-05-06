@@ -7,11 +7,17 @@ import (
 )
 
 type City struct {
-	code, value int
+	code   int
+	banned bool
+}
+
+type Value struct {
+	value int
+	city  *City
 }
 
 type MaxHeap struct {
-	a        []*City
+	a        []*Value
 	heapSize int
 }
 
@@ -37,13 +43,13 @@ func (bh *MaxHeap) siftDown(i int) {
 	}
 }
 
-func (bh *MaxHeap) insert(key *City) {
+func (bh *MaxHeap) insert(key *Value) {
 	bh.heapSize += 1
 	bh.a[bh.heapSize-1] = key
 	bh.siftUp(bh.heapSize - 1)
 }
 
-func (bh *MaxHeap) getMax() *City {
+func (bh *MaxHeap) getMax() *Value {
 	hmax := bh.a[0]
 	bh.a[0] = bh.a[bh.heapSize-1]
 	bh.heapSize--
@@ -52,7 +58,7 @@ func (bh *MaxHeap) getMax() *City {
 	return hmax
 }
 
-func (bh *MaxHeap) build(arr []*City, N int) {
+func (bh *MaxHeap) build(arr []*Value, N int) {
 	bh.a = arr
 	bh.heapSize = N
 	for i := bh.heapSize / 2; i >= 0; i-- {
@@ -113,42 +119,29 @@ func (q *Queue[T]) peek() T {
 	return q.head.value
 }
 
-func checkBanList(search int, banList *Queue[int]) bool {
-	item := banList.head
-
-	for item != nil {
-		if item.value == search {
-			return true
-		}
-		item = item.next
-	}
-	return false
-}
-
-func findTourPath(n int, answers *Queue[string], rewards, ratings []*City) (*Queue[int], *Queue[int]) {
+func findTourPath(n int, answers *Queue[string], rewards, ratings []*Value) (*Queue[int], *Queue[int]) {
 	ratHeap, rewHeap := new(MaxHeap), new(MaxHeap)
 	ratHeap.build(ratings, n)
 	rewHeap.build(rewards, n)
 	askSeq := new(Queue[int])
 	tourSeq := new(Queue[int])
-	banList := new(Queue[int])
 
 	for i := 0; i < n; i++ {
 		mrat, mrew := ratHeap.getMax(), rewHeap.a[0]
-		for checkBanList(mrew.code, banList) {
+		for mrew.city.banned {
 			rewHeap.getMax()
 			mrew = rewHeap.a[0]
 		}
-		if mrat.code == mrew.code {
+		if mrat.city.code == mrew.city.code {
 			rewHeap.getMax()
-			tourSeq.push(mrat.code)
+			tourSeq.push(mrat.city.code)
 		} else if !answers.isEmpty() {
 			if answers.peek() == "YES" {
-				tourSeq.push(mrat.code)
+				tourSeq.push(mrat.city.code)
 			} else {
-				banList.push(mrat.code)
+				mrat.city.banned = true
 			}
-			askSeq.push(mrat.code)
+			askSeq.push(mrat.city.code)
 			answers.pop()
 		}
 	}
@@ -159,18 +152,16 @@ func main() {
 	in, out := bufio.NewReader(os.Stdin), bufio.NewWriter(os.Stdout)
 	var n int
 	fmt.Fscanln(in, &n)
-	rewards, ratings := make([]*City, n), make([]*City, n)
+	rewards, ratings := make([]*Value, n), make([]*Value, n)
 
 	for i := 0; i < n; i++ {
 		var code, rating, reward int
 		fmt.Fscanf(in, "%d %d %d\n", &code, &rating, &reward)
-		cityRating, cityReward := new(City), new(City)
-		cityRating.code = code
-		cityRating.value = rating
-		cityReward.code = code
-		cityReward.value = reward
-		rewards[i] = cityReward
-		ratings[i] = cityRating
+		city := new(City)
+		city.code = code
+
+		rewards[i] = &Value{city: city, value: reward}
+		ratings[i] = &Value{city: city, value: rating}
 	}
 	var m int
 	fmt.Fscanln(in, &m)

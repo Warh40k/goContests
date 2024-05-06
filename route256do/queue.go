@@ -19,24 +19,29 @@ func checkPair(sym1, sym2 rune) bool {
 }
 
 func findPair(pos, target, counter, length int, input []rune, used []bool) bool {
-	for i := pos + 1; i < len(input); i++ {
-
-		if !used[pos] && !used[i] && checkPair(input[pos], input[i]) {
-			used[pos] = true
-			used[i] = true
-			counter += 2
-			if counter == length {
-				return true
-			}
-			for j := pos + 1; j < len(input); j++ {
-				if used[j] == false {
-					if findPair(j, counter, length, input, used) {
+	if input[pos] == 'Z' {
+		return false
+	}
+	if !used[pos] && !used[target] && checkPair(input[pos], input[target]) {
+		used[pos] = true
+		used[target] = true
+		counter += 2
+		if counter == length {
+			return true
+		}
+		for j := pos + 1; j < length; j++ {
+			if !used[j] {
+				for k := j + 1; k < length; k++ {
+					if !used[k] && findPair(j, k, counter, length, input, used) {
 						return true
 					}
 				}
 			}
 		}
 	}
+	used[pos] = false
+	used[target] = false
+
 	return false
 }
 
@@ -51,12 +56,17 @@ func main() {
 		var sinput string
 		fmt.Fscan(in, &l, &sinput)
 		input := []rune(sinput)
-		fmt.Fprintln(out, input)
-		used := make([]bool, l)
-		if findPair(0, 0, l, input, used) {
-			fmt.Fprintln(out, "YES")
-		} else {
-			fmt.Fprintln(out, "NO")
+		found := false
+		for j := 1; j < l; j++ {
+			used := make([]bool, l)
+			if findPair(0, j, 0, l, input, used) {
+				found = true
+				fmt.Fprintln(out, "Yes")
+				break
+			}
+		}
+		if !found {
+			fmt.Fprintln(out, "No")
 		}
 	}
 }

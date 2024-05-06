@@ -1,0 +1,7 @@
+create
+insert 0 1
+insert 0 2
+extract-min 0
+extract-min 0
+insert 0 5
+extract-min 0

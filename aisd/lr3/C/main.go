@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"runtime/debug"
 )
 
 type Worker struct {
@@ -12,7 +13,7 @@ type Worker struct {
 }
 
 type Order struct {
-	start, length int
+	start, end int
 }
 
 type SalaryMinHeap struct {
@@ -74,14 +75,14 @@ func (q *Queue) peek() *Order {
 	return q.head.value
 }
 
-func (bh *SalaryMinHeap) siftDown(i int) {
+func (bh *SalaryMinHeap) siftUp(i int) {
 	for bh.a[i].salary < bh.a[(i-1)/2].salary {
 		bh.a[i], bh.a[(i-1)/2] = bh.a[(i-1)/2], bh.a[i]
 		i = (i - 1) / 2
 	}
 }
 
-func (bh *SalaryMinHeap) siftUp(i int) {
+func (bh *SalaryMinHeap) siftDown(i int) {
 	for 2*i+1 < bh.heapSize {
 		left, right := 2*i+1, 2*i+2
 		j := left
@@ -103,7 +104,7 @@ func (bh *SalaryMinHeap) getMin() *Worker {
 	hmin := bh.a[0]
 	bh.a[0] = bh.a[bh.heapSize-1]
 	bh.heapSize--
-	bh.siftUp(0)
+	bh.siftDown(0)
 
 	return hmin
 }
@@ -111,14 +112,14 @@ func (bh *SalaryMinHeap) getMin() *Worker {
 func (bh *SalaryMinHeap) insert(key *Worker) {
 	bh.heapSize += 1
 	bh.a[bh.heapSize-1] = key
-	bh.siftDown(bh.heapSize - 1)
+	bh.siftUp(bh.heapSize - 1)
 }
 
 func (bh *SalaryMinHeap) build(arr []*Worker, N int) {
 	bh.a = arr
 	bh.heapSize = N
 	for i := bh.heapSize / 2; i >= 0; i-- {
-		bh.siftUp(i)
+		bh.siftDown(i)
 	}
 }
 
@@ -129,14 +130,14 @@ func (bh *SalaryMinHeap) peek() *Worker {
 	return bh.a[0]
 }
 
-func (bh *TimeEndMinHeap) siftDown(i int) {
+func (bh *TimeEndMinHeap) siftUp(i int) {
 	for bh.a[i].timeEnd < bh.a[(i-1)/2].timeEnd {
 		bh.a[i], bh.a[(i-1)/2] = bh.a[(i-1)/2], bh.a[i]
 		i = (i - 1) / 2
 	}
 }
 
-func (bh *TimeEndMinHeap) siftUp(i int) {
+func (bh *TimeEndMinHeap) siftDown(i int) {
 	for 2*i+1 < bh.heapSize {
 		left, right := 2*i+1, 2*i+2
 		j := left
@@ -158,7 +159,7 @@ func (bh *TimeEndMinHeap) getMin() *Worker {
 	hmin := bh.a[0]
 	bh.a[0] = bh.a[bh.heapSize-1]
 	bh.heapSize--
-	bh.siftUp(0)
+	bh.siftDown(0)
 
 	return hmin
 }
@@ -166,7 +167,7 @@ func (bh *TimeEndMinHeap) getMin() *Worker {
 func (bh *TimeEndMinHeap) insert(key *Worker) {
 	bh.heapSize += 1
 	bh.a[bh.heapSize-1] = key
-	bh.siftDown(bh.heapSize - 1)
+	bh.siftUp(bh.heapSize - 1)
 }
 
 func (bh *TimeEndMinHeap) build(arr []*Worker, N int) {
@@ -203,10 +204,10 @@ func evaluateSalary(m int, incomingOrder *Queue, vacantWorkers *SalaryMinHeap) i
 			if vacantWorkers.heapSize != 0 {
 				// Достаем самого дешевого шавермана
 				vacant = vacantWorkers.getMin()
-				vacant.timeEnd = incomOrd.start + incomOrd.length
+				vacant.timeEnd = incomOrd.start + incomOrd.end
 				// Назначение работника на поступивший заказ
 				timeEndHeap.insert(vacant)
-				cost += incomOrd.length * vacant.salary
+				cost += incomOrd.end * vacant.salary
 			}
 		}
 	}
@@ -227,13 +228,16 @@ func test() {
 	for i := 0; i < m; i++ {
 		t = start + rand.Intn(10e3)
 		f = t + rand.Intn(10e3) + 1
-		incomingOrders.push(&Order{start: t, length: f})
+		incomingOrders.push(&Order{start: t, end: f})
 	}
 	vacantWokers.build(shaurmen, n)
 	fmt.Println(evaluateSalary(m, incomingOrders, vacantWokers))
 }
 
 func main() {
+	//test()
+	//os.Exit(0)
+	debug.SetGCPercent(-1)
 	out := bufio.NewWriter(os.Stdout)
 	var n, m, salary, t, f int
 	fmt.Scan(&n, &m)
@@ -248,7 +252,7 @@ func main() {
 
 	for i := 0; i < m; i++ {
 		fmt.Scan(&t, &f)
-		incomingOrders.push(&Order{start: t, length: f})
+		incomingOrders.push(&Order{start: t, end: f})
 	}
 
 	vacantWorkers.build(shaurmen, n)
